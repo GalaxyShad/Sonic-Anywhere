@@ -1,0 +1,24 @@
+AlignAfterOpenBracket: BlockIndent
+AlignArrayOfStructures: Left
+AlignEscapedNewlines: Left
+AlignOperands: true
+AllowShortFunctionsOnASingleLine: Empty
+AlwaysBreakBeforeMultilineStrings: true
+BraceWrapping:
+  AfterEnum: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+BreakBeforeBraces: Attach
+BreakBeforeTernaryOperators: true
+BreakStringLiterals: true
+ColumnLimit: 120
+ContinuationIndentWidth: 2
+IndentWidth: 4
+IndentWrappedFunctionNames: true
+MaxEmptyLinesToKeep: 2
+PointerAlignment: Left
+SpaceAfterCStyleCast: true
+SpaceAroundPointerQualifiers: Default
+TabWidth: 4
+UseCRLF: false
