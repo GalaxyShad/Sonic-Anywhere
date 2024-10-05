@@ -1,6 +1,6 @@
 #include "resourcestore.h"
 
-#include "../../src_backend/include/debug.h"
+#include "src_backend/debug.h"
 
 ReadonlyByteArray resource_store__get(ResourceID res_id) {
     RAISE_NOT_IMPLEMENTED;

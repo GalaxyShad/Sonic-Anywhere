@@ -1,7 +1,7 @@
 #ifndef SONIC_ANYWHERE_BYTEARRAY_H
 #define SONIC_ANYWHERE_BYTEARRAY_H
 
-#include "../src_backend/include/tinyint.h"
+#include "include_backend/tinyint.h"
 
 typedef struct MutableByteArray {
     u8* arr;

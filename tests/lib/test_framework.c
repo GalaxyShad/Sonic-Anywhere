@@ -1,11 +1,7 @@
 #include "test_framework.h"
 
 #include <stdio.h>
-
-// clang-format off
-#define FAIL_MSG    "[TASSERT] \033[0;31m|X| |FAIL|\033[0m "
-#define OK_MSG      "[TASSERT] \033[0;32m|V| | OK |\033[0m "
-// clang-format on
+#include <stdarg.h>
 
 void test_assert_array_equals__(
   const unsigned char* a, unsigned long long int a_size, const unsigned char* b, unsigned long long int b_size,
@@ -27,4 +23,17 @@ void test_assert_array_equals__(
     }
 
     printf(OK_MSG "[%s] FILE %s ; LINE %d\n", fn, file, line);
+}
+void test_print__(const char* format, ...) {
+    va_list args;
+    int result;
+
+    // Initialize the argument list
+    va_start(args, format);
+
+    // Call the original printf function with the variable arguments
+    result = vprintf(format, args);
+
+    // Clean up the argument list
+    va_end(args);
 }
