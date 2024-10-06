@@ -23,11 +23,12 @@ add_executable(sonic_anywhere
         src/gamemode/game.c
         src/gamemode/gamemode_sega.c
         src/audio.c
-        src/audio.h
+        include_backend/audio.h
         include_backend/mdcolor.h
         include_backend/vpu.h
         include_backend/plc.h
-        include_backend/interrupt.h)
+        include_backend/interrupt.h
+        include_backend/input.h)
 
 target_include_directories(sonic_anywhere PRIVATE "./")
 
