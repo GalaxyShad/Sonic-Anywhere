@@ -9,8 +9,7 @@ typedef enum PaletteID {
     PALETTE_ID_WATER
 } PaletteID;
 
-MDColor vpu_palette__first_color();
-void vpu_palette__foreach(PaletteID pal_id, MDColor (*func)(MDColor));
+void vdp_palette__foreach(PaletteID pal_id, MDColor (*func)(MDColor));
 
 typedef enum VpuPaletteWaterState {
     VPU_PALETTE_WATER_STATE__DRY_OR_PARTIALLY,

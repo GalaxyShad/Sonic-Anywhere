@@ -14,7 +14,7 @@ typedef enum GameMode {
 } GameMode;
 
 void game__load_game_mode(GameMode gm);
-_Noreturn void game__init();
+void game__init();
 
 void game_mode_sega();
 void game_mode_title();

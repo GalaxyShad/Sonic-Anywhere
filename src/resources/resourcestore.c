@@ -2,12 +2,14 @@
 
 #include "include_backend/debug.h"
 
+static u8 dummy[256];
+
 ReadonlyByteArray resource_store__get(ResourceID res_id) {
-    RAISE_NOT_IMPLEMENTED;
+    RAISE_NOT_IMPLEMENTED
 
-#ifdef USE_S1DISASM_ASSETS_C_HEADERS
+    ReadonlyByteArray res = {
+        dummy, 256
+    };
 
-#else
-
-#endif
+    return res;
 }

@@ -25,8 +25,8 @@ static u8 palette__[16];
 
 static void fadeout_to_black__() {
     //    FadeOut_ToBlack:
-    vpu_palette__foreach(PALETTE_ID_MAIN, mdcolor__fade_black);
-    vpu_palette__foreach(PALETTE_ID_WATER, mdcolor__fade_black);
+    vdp_palette__foreach(PALETTE_ID_MAIN, mdcolor__fade_black);
+    vdp_palette__foreach(PALETTE_ID_WATER, mdcolor__fade_black);
 }
 
 static void palette_fadeout__() {
@@ -187,7 +187,7 @@ void game_mode_sega() {
       use_japanese_logo ? RESOURCE__TILEMAPS__SEGA_LOGO_JP1_ENI : RESOURCE__TILEMAPS__SEGA_LOGO_ENI
     );
     u8* buffer = vpu__get_mutable_memory_256x256_tile_mappings();
-    compressors__enigma_decompress(sega_logo_mappings.arr, sega_logo_mappings.size, buffer, 256 * 256, 0);
+    compressors__enigma_decompress(sega_logo_mappings.arr, sega_logo_mappings.size, buffer, 2048, 0);
 
     ReadonlyByteArray buff_arr = {buffer, 256 * 256};
     vpu__copy_tilemap_to_layer_r(VPU_LAYER__BACKGROUND, 510, &buff_arr, 24, 8);
@@ -230,10 +230,12 @@ void game_mode_sega() {
         //    move.b	#2,(v_vbla_routine).w
         vpu__sleep_until_vblank();
 
-        if (demo_length == 0 || input__is_btn_pressed(BUTTON_CODE__START)) {
+        if ((demo_length == 0) || input__is_btn_pressed(BUTTON_CODE__START)) {
             // Sega_GotoTitle:
             game__load_game_mode(GM_TITLE);
             return;
         }
+
+        demo_length = 0;
     }
 }

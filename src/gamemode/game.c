@@ -9,7 +9,7 @@ void game__load_game_mode(GameMode gm) {
     game_mode__ = gm;
 }
 
-_Noreturn void game__init() {
+void game__init() {
     // TODO clear_ram();
 
     // TODO	VDPSetupGame
@@ -18,6 +18,9 @@ _Noreturn void game__init() {
 
     game__load_game_mode(GM_SEGA);
     while (1) {
-        game_mode_sega();
+        if (game_mode__ == GM_SEGA)
+            game_mode_sega();
+        else
+            return;
     }
 }
