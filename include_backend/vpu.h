@@ -4,6 +4,8 @@
 #include "mdcolor.h"
 #include "../src/bytearray.h"
 
+void vpu__init();
+
 typedef enum PaletteID {
     PALETTE_ID_MAIN,
     PALETTE_ID_WATER
@@ -76,7 +78,11 @@ void vpu__set_scrolling_mode(VpuVScrollMode vertical_mode, VpuHScrollMode horizo
 
 
 
-u8* vpu__get_mutable_direct_memory();
+
+void vpu__set_window(const u8* window, size window_size);
+
+
+
 u8* vpu__get_mutable_memory_256x256_tile_mappings();
 
 typedef enum VpuLayer {

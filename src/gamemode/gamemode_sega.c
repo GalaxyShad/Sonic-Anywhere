@@ -53,7 +53,7 @@ static u16 palette_cycle_sega__() {
         u16 pal_shift = 0x20;
         // a0
         ReadonlyByteArray pal_sega1 = resource_store__get(RESOURCE__PALETTE__SEGA1_BIN);
-        u16* pal_sega_ptr = (u16*)pal_sega1.arr;
+        u8* pal_sega_ptr = pal_sega1.arr;
 
         i16 d1 = 5;
         u16 d0 = v_pcyc_num;
@@ -73,7 +73,10 @@ static u16 palette_cycle_sega__() {
 
         // loc_2034:
         if (d0 < 0x60) {
-            vpu_palette__set_color(d0 + pal_shift, *pal_sega_ptr);
+            u16 b = pal_sega_ptr[1];
+            u16 col = (pal_sega_ptr[0] << 8) | b;
+
+            vpu_palette__set_color(d0 + pal_shift, col);
         }
 
         // loc_203E:
@@ -179,15 +182,18 @@ void game_mode_sega() {
 
     ReadonlyByteArray sega_logo_patterns_nem =
       resource_store__get(use_japanese_logo ? RESOURCE__ARTNEM__SEGA_LOGO_JP1_NEM : RESOURCE__ARTNEM__SEGA_LOGO_NEM);
-    compressors__nemesis_decompress(
-      sega_logo_patterns_nem.arr, sega_logo_patterns_nem.size, vpu__get_mutable_direct_memory(), 5024
-    );
+
+    vpu__set_window(sega_logo_patterns_nem.arr, sega_logo_patterns_nem.size);
+
+//    compressors__nemesis_decompress(
+//      sega_logo_patterns_nem.arr, sega_logo_patterns_nem.size, vpu__get_mutable_direct_memory(), 5024
+//    );
 
     ReadonlyByteArray sega_logo_mappings = resource_store__get(
       use_japanese_logo ? RESOURCE__TILEMAPS__SEGA_LOGO_JP1_ENI : RESOURCE__TILEMAPS__SEGA_LOGO_ENI
     );
     u8* buffer = vpu__get_mutable_memory_256x256_tile_mappings();
-    compressors__enigma_decompress(sega_logo_mappings.arr, sega_logo_mappings.size, buffer, 2048, 0);
+    compressors__enigma_decompress(sega_logo_mappings.arr, sega_logo_mappings.size, buffer, 256*256, 0);
 
     ReadonlyByteArray buff_arr = {buffer, 256 * 256};
     vpu__copy_tilemap_to_layer_r(VPU_LAYER__BACKGROUND, 510, &buff_arr, 24, 8);
@@ -235,7 +241,5 @@ void game_mode_sega() {
             game__load_game_mode(GM_TITLE);
             return;
         }
-
-        demo_length = 0;
     }
 }

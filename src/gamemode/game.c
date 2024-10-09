@@ -2,6 +2,8 @@
 
 #include "include_backend/debug.h"
 
+#include "include_backend/vpu.h"
+
 static GameMode game_mode__;
 
 void game__load_game_mode(GameMode gm) {
@@ -10,9 +12,13 @@ void game__load_game_mode(GameMode gm) {
 }
 
 void game__init() {
+    vpu__init();
+
     // TODO clear_ram();
 
     // TODO	VDPSetupGame
+
+
     // TODO	DACDriverLoad
     // TODO	JoypadInit
 

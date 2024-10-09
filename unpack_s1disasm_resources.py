@@ -45,7 +45,7 @@ def ext_to_h(file_path):
 
     name_define = 'S1DISASM__' + (
         os.path.basename(file_path).upper()) + '__' + file_name_upper + '_' + file_ext.upper()[1:]
-    write_begin = '#ifndef ' + name_define + '_H' + '\n#define ' + name_define + '_H' + '\n\nconst char ' + name_define + '_BODY[] = {\n'
+    write_begin = '#ifndef ' + name_define + '_H' + '\n#define ' + name_define + '_H' + '\n\nconst unsigned char ' + name_define + '_BODY[] = {\n'
     write_end = '\n};\n\n#endif // ' + name_define + '_H' + '\n'
 
     with open(write_file_name, "w+") as file:
