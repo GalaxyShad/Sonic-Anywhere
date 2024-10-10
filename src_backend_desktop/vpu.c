@@ -82,9 +82,9 @@ typedef struct Plane {
 static u8 foreground__[900000] = {0};
 static u8 background__[900000] = {0};
 
-static Plane plane_foreground = {.data = foreground__, .cell_width = 0, .cell_height = 0};
+static Plane plane_foreground = {.data = foreground__, .cell_width = 1, .cell_height = 1};
 
-static Plane plane_background = {.data = foreground__, .cell_width = 0, .cell_height = 0};
+static Plane plane_background = {.data = foreground__, .cell_width = 1, .cell_height = 1};
 
 
 static u8 tiles__[4096 * 16];

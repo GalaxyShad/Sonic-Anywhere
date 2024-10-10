@@ -35,6 +35,14 @@ if(TARGET SDL2::SDL2main)
     target_link_libraries(sonic_anywhere PRIVATE SDL2::SDL2main)
 endif()
 
+if (WIN32)
+    add_custom_command(
+            TARGET sonic_anywhere POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:SDL2::SDL2>" "$<TARGET_FILE_DIR:sonic_anywhere>"
+            VERBATIM
+    )
+endif()
+
 target_link_libraries(sonic_anywhere PRIVATE SDL2::SDL2)
 
 add_executable(sonic_anywhere_tests

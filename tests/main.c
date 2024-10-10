@@ -74,31 +74,31 @@ void test____utils__lshift_bits____10010110b10110101_shifted_by_14_should_be_010
 }
 
 void test____utils__lshift_bits____a_shifted_by_14_should_be_01000000() {
-    const u8 buff[] = {0x05, 0x3D, 0x11, 0x8F, 0xE0 };
+    const u8 buff[] = {0x05, 0x3D, 0x11, 0x8F, 0xE0};
     TEST_ASSERT_EQUALS(utils__lshift_bits(buff, 5, 6), 0b01001111)
 }
 
 void test____utils__lshift_bits____ff() {
-    const u8 buff[] = {0xFF, 0xFF };
+    const u8 buff[] = {0xFF, 0xFF};
     TEST_ASSERT_EQUALS(utils__lshift_bits(buff, 2, 6), 0b11111111)
 }
 
 int main() {
-    //    test____tinyint____u8_should_be_1_byte_long();
-    //    test____tinyint____u16_should_be_2_byte_long();
-    //    test____tinyint____u32_should_be_4_byte_long();
-    //    test____tinyint____u64_should_be_8_byte_long();
+    test____tinyint____u8_should_be_1_byte_long();
+    test____tinyint____u16_should_be_2_byte_long();
+    test____tinyint____u32_should_be_4_byte_long();
+    test____tinyint____u64_should_be_8_byte_long();
 
-    //    test____compressors__kosinski_decompress____should_decompress();
-        test____compressors__enigma_decompress____should_decompress();
+    //        test____compressors__kosinski_decompress____should_decompress();
+    test____compressors__enigma_decompress____should_decompress();
     test____compressors__enigma_decompress____should_decompress_data_from_sega_retro();
-//        test____compressors__nemesis_decompress____should_decompress();
+    //        test____compressors__nemesis_decompress____should_decompress();
 
-//        test____utils__lshift_bits____10010110b10110101_shifted_by_0_should_be_10010110();
-//        test____utils__lshift_bits____10010110b10110101_shifted_by_2_should_be_01011010();
-//        test____utils__lshift_bits____10010110b10110101_shifted_by_14_should_be_01000000();
-//        test____utils__lshift_bits____a_shifted_by_14_should_be_01000000();
-//        test____utils__lshift_bits____ff();
+    test____utils__lshift_bits____10010110b10110101_shifted_by_0_should_be_10010110();
+    test____utils__lshift_bits____10010110b10110101_shifted_by_2_should_be_01011010();
+    test____utils__lshift_bits____10010110b10110101_shifted_by_14_should_be_01000000();
+    test____utils__lshift_bits____a_shifted_by_14_should_be_01000000();
+    test____utils__lshift_bits____ff();
 
     return 0;
 }
