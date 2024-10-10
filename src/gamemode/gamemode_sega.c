@@ -26,8 +26,8 @@ static u8 palette__[16];
 
 static void fadeout_to_black__() {
     //    FadeOut_ToBlack:
-    vdp_palette__foreach(PALETTE_ID_MAIN, mdcolor__fade_black);
-    vdp_palette__foreach(PALETTE_ID_WATER, mdcolor__fade_black);
+    game_vdp__palette_foreach(GAME_VDP_PALETTE_LAYER__MAIN, mdcolor__fade_black);
+    game_vdp__palette_foreach(GAME_VDP_PALETTE_LAYER__WATER, mdcolor__fade_black);
 }
 
 static void palette_fadeout__() {
@@ -77,7 +77,7 @@ static u16 palette_cycle_sega__() {
             u16 b = pal_sega_ptr[1];
             u16 col = (pal_sega_ptr[0] << 8) | b;
 
-            vpu_palette__set_color(d0 + pal_shift, col);
+            game_vdp__palette_set_color(d0 + pal_shift, col);
         }
 
         // loc_203E:
@@ -129,7 +129,7 @@ static u16 palette_cycle_sega__() {
         u16 pal_shift = 4;
 
         for (int i = 0; i < 6; i++) {
-            vpu_palette__set_color(pal_shift + d0 + i, pal_sega_2[i]);
+            game_vdp__palette_set_color(pal_shift + d0 + i, pal_sega_2[i]);
         }
 
         d0 = 0;
@@ -143,7 +143,7 @@ static u16 palette_cycle_sega__() {
 
         // loc_20B2:
         do {
-            vpu_palette__set_color(pal_shift + d0, *pal_sega_2);
+            game_vdp__palette_set_color(pal_shift + d0, *pal_sega_2);
             d0 += 2;
             d1--;
         } while (d1 != -1);

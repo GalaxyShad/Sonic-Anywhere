@@ -1,6 +1,8 @@
 #ifndef SONIC_ANYWHERE_GAMEVDP_H
 #define SONIC_ANYWHERE_GAMEVDP_H
 
+#include "include_backend/mdcolor.h"
+
 typedef enum GameVdpPaletteID {
     GAME_VDP_PALETTE_ID__SEGA_LOGO,
     GAME_VDP_PALETTE_ID__TITLE,
@@ -36,5 +38,14 @@ typedef enum GameVdpPaletteWaterState {
 } GameVdpPaletteWaterState;
 
 void game_vdp__set_palette_water_state(GameVdpPaletteWaterState water_state);
+
+typedef enum GameVdpPaletteLayerID {
+    GAME_VDP_PALETTE_LAYER__MAIN,
+    GAME_VDP_PALETTE_LAYER__WATER
+} GameVdpPaletteLayerID;
+
+void game_vdp__palette_foreach(GameVdpPaletteLayerID pal_id, MDColor (*func)(MDColor));
+
+void game_vdp__palette_set_color(u8 index, MDColor color);
 
 #endif // SONIC_ANYWHERE_GAMEVDP_H

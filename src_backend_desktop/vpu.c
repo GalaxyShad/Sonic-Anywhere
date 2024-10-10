@@ -8,12 +8,6 @@ static u8 tile_mapping_mem__[256 * 256];
 
 ////////////////////////////////////////////////////////
 
-void vdp_palette__foreach(PaletteID pal_id, MDColor (*func)(MDColor)) {
-    for (int i = 0; i < 4 * 16; i++) {
-        palette__[i] = func(palette__[i]);
-    }
-}
-
 void vpu_palette__load(const ReadonlyByteArray* palette){
     LOG("called [%s] pal_id = %d", __func__)
 
@@ -21,15 +15,6 @@ void vpu_palette__load(const ReadonlyByteArray* palette){
         palette__[i] = (palette->arr[i * 2] << 8) | palette->arr[i * 2 + 1];
     }
 }
-
-void vpu_palette__set_color(int color_index, MDColor color) {
-    ASSERT(color_index > 0 && color_index <= 4 * 16)
-
-    LOG("called [%s] index = %d color = %04X", __func__, color_index, color)
-
-    palette__[color_index] = color;
-}
-
 
 void vpu__set_color_mode(VpuColorMode mode) {
     LOG("called [%s] VDP ColorMode = %d", __func__, mode)

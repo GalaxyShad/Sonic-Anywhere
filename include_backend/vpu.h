@@ -6,15 +6,7 @@
 
 void vpu__init();
 
-typedef enum PaletteID {
-    PALETTE_ID_MAIN,
-    PALETTE_ID_WATER
-} PaletteID;
-
-void vdp_palette__foreach(PaletteID pal_id, MDColor (*func)(MDColor));
-
 void vpu_palette__load(const ReadonlyByteArray* palette);
-void vpu_palette__set_color(int color_index, MDColor color);
 
 void vpu__sleep_until_vblank();
 

@@ -82,3 +82,11 @@ void game_vdp__load_palette(GameVdpPaletteID pal_id) {
 void game_vdp__set_palette_water_state(GameVdpPaletteWaterState water_state) {
     RAISE_NOT_IMPLEMENTED
 }
+
+void game_vdp__palette_foreach(GameVdpPaletteLayerID pal_id, MDColor (*func)(MDColor)) {
+    RAISE_NOT_IMPLEMENTED
+}
+
+void game_vdp__palette_set_color(u8 index, MDColor color) {
+    RAISE_NOT_IMPLEMENTED
+}
