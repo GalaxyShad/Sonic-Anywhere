@@ -11,6 +11,7 @@
 #include "../resources/resourcestore.h"
 
 #include "include_backend/audio.h"
+#include "src/gamevdp.h"
 
 // ---------------------------------------------------------------------------
 //  Sega screen
@@ -168,7 +169,7 @@ void game_mode_sega() {
     vpu__set_background_color(0, 0);
     vpu__set_scrolling_mode(VPU_VSCROLL_MODE__FULL_SCROLL, VPU_HSCROLL_MODE__FULL_SCROLL, 0);
 
-    vpu_palette__set_water_state(VPU_PALETTE_WATER_STATE__DRY_OR_PARTIALLY);
+    game_vdp__set_palette_water_state(GAME_VDP_PALETTE_WATER_STATE__DRY_OR_PARTIALLY);
 
     DISABLE_INTERRUPTS();
 
@@ -223,7 +224,7 @@ void game_mode_sega() {
     do {
         //    move.b	#2,(v_vbla_routine).w
         vpu__sleep_until_vblank();
-        vpu_palette__load(VPU_PALETTE_ID__SEGA_LOGO);
+        game_vdp__load_palette(GAME_VDP_PALETTE_ID__SEGA_LOGO);
     } while (palette_cycle_sega__() != 0);
 
     audio__play_sound_special(SND__SEGA);

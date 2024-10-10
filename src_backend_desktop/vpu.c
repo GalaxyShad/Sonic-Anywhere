@@ -14,27 +14,11 @@ void vdp_palette__foreach(PaletteID pal_id, MDColor (*func)(MDColor)) {
     }
 }
 
-void vpu_palette__set_water_state(VpuPaletteWaterState water_state) {
-    LOG("called [%s] water_state = %d", __func__, water_state)
-}
+void vpu_palette__load(const ReadonlyByteArray* palette){
+    LOG("called [%s] pal_id = %d", __func__)
 
-void vpu_palette__load(VpuPaletteID pal_id) {
-    LOG("called [%s] pal_id = %d", __func__, pal_id)
-
-    const u16 temp[] = {0x0000, 0x0060, 0x06e6, 0x00a0, 0x0020, 0x0006, 0x000a, 0x000e,
-                        0x022e, 0x066e, 0x0aae, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000};
-
-    const u16 temp2[] = {0x0E, 0xEC, 0x0E, 0xEA, 0x0E, 0xEA, 0x0E, 0xEA, 0x0E, 0xEA, 0x0E, 0xEA,
-                         0x0E, 0xEC, 0x0E, 0xEA, 0x0E, 0xE4, 0x0E, 0xC0, 0x0E, 0xC0, 0x0E, 0xC0,
-                         0x0E, 0xEC, 0x0E, 0xEA, 0x0E, 0xE4, 0x0E, 0xC0, 0x0E, 0xA0, 0x0E, 0x60,
-                         0x0E, 0xEA, 0x0E, 0xE4, 0x0E, 0xC0, 0x0E, 0xA0, 0x0E, 0x80, 0x0E, 0x00};
-
-    for (int i = 0; i < 4 * 16; i++) {
-        palette__[i] = 0x0E00;
-    }
-
-    for (int i = 0; i < 24; i++) {
-        palette__[i] = (temp2[i * 2] << 8) | temp2[i * 2 + 1];
+    for (int i = 0; i < palette->size / 2; i++) {
+        palette__[i] = (palette->arr[i * 2] << 8) | palette->arr[i * 2 + 1];
     }
 }
 

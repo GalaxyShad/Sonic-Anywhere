@@ -13,41 +13,7 @@ typedef enum PaletteID {
 
 void vdp_palette__foreach(PaletteID pal_id, MDColor (*func)(MDColor));
 
-typedef enum VpuPaletteWaterState {
-    VPU_PALETTE_WATER_STATE__DRY_OR_PARTIALLY,
-    VPU_PALETTE_WATER_STATE__ALL_UNDERWATER
-} VpuPaletteWaterState;
-
-void vpu_palette__set_water_state(VpuPaletteWaterState water_state);
-
-typedef enum VpuPaletteID {
-    VPU_PALETTE_ID__SEGA_LOGO,
-    VPU_PALETTE_ID__TITLE,
-    VPU_PALETTE_ID__LEVEL_SELECT,
-    VPU_PALETTE_ID__SONIC,
-
-    VPU_PALETTE_ID__GREEN_HILL_ZONE,
-    VPU_PALETTE_ID__LABYRINTH_ZONE,
-    VPU_PALETTE_ID__MARBLE_ZONE,
-    VPU_PALETTE_ID__STAR_LIGHT_ZONE,
-    VPU_PALETTE_ID__SPRING_YARD_ZONE,
-    VPU_PALETTE_ID__SCRAP_BRAIN_ZONE_ACT_1,
-
-    VPU_PALETTE_ID__SPECIAL_STAGE,
-    VPU_PALETTE_ID__LABYRINTH_ZONE_WATER,
-    VPU_PALETTE_ID__SCRAP_BRAIN_ZONE_ACT_3,
-    VPU_PALETTE_ID__SCRAP_BRAIN_ZONE_ACT_3_WATER,
-    VPU_PALETTE_ID__SCRAP_BRAIN_ZONE_ACT_2,
-
-    VPU_PALETTE_ID__SONIC_UNDERWATER_LABYRINTH,
-    VPU_PALETTE_ID__SONIC_UNDERWATER_SCRAP_BRAIN,
-
-    VPU_PALETTE_ID__SPECIAL_STAGE_RESULTS,
-    VPU_PALETTE_ID__SPECIAL_STAGE_RESULTS_CONTINUE,
-    VPU_PALETTE_ID__ENDING_SEQUENCE
-} VpuPaletteID;
-
-void vpu_palette__load(VpuPaletteID pal_id);
+void vpu_palette__load(const ReadonlyByteArray* palette);
 void vpu_palette__set_color(int color_index, MDColor color);
 
 void vpu__sleep_until_vblank();
