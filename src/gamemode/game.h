@@ -1,17 +1,21 @@
 #ifndef SONIC_ANYWHERE_GAME_H
 #define SONIC_ANYWHERE_GAME_H
 
+// clang-format off
 typedef enum GameMode {
-    GM_SEGA,
-    GM_TITLE = 0x04,
-    GM_DEMO = 0x08,
-    GM_LEVEL = 0x0C,
-    GM_SPECIAL_STAGE = 0x10,
-    GM_CONTINUE = 0x14,
-    GM_END = 0x18,
-    GM_CREDIT = 0x1C,
-    GM_PRE_LEVEL = 0x8C
+    GM_SEGA             = 0x00,
+    GM_TITLE            = 0x04,
+    GM_DEMO             = 0x08,
+    GM_LEVEL            = 0x0C,
+    GM_SPECIAL_STAGE    = 0x10,
+    GM_CONTINUE         = 0x14,
+    GM_END              = 0x18,
+    GM_CREDIT           = 0x1C,
+    GM_PRE_LEVEL        = 0x8C
 } GameMode;
+// clang-format on
+
+GameMode game__get_game_mode();
 
 void game__load_game_mode(GameMode gm);
 void game__init();

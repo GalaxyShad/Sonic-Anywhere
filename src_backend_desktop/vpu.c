@@ -45,6 +45,10 @@ u8* vpu__get_mutable_memory_256x256_tile_mappings() {
     return tile_mapping_mem__;
 }
 
+void vdp__set_ram_address(VdpRamAccessMode access_mode, u16 adr, bool vram_to_vram_copy, bool dma) {
+    RAISE_NOT_IMPLEMENTED
+}
+
 
 ///////////////////////////
 ///////////////////////////

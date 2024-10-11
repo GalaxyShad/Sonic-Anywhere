@@ -13,4 +13,6 @@ typedef     unsigned long long  u64;
 
 typedef     unsigned long long  size;
 
+typedef     int                 bool;
+
 #endif // SONIC_ANYWHERE_TINYINT_H

@@ -34,3 +34,7 @@ void game__init() {
             return;
     }
 }
+
+GameMode game__get_game_mode() {
+    return game_mode__;
+}

@@ -37,5 +37,17 @@ void vdp__copy_tilemap_to_layer_r(
   VdpPlane plane_id, i32 shift, const ReadonlyByteArray* tilemap, size cells_width, size cells_height
 );
 
+typedef enum VdpRamAccessMode {
+    VDP_RAM_ACCESS_MODE__VRAM_WRITE,
+    VDP_RAM_ACCESS_MODE__CRAM_WRITE,
+    VDP_RAM_ACCESS_MODE__VSRAM_WRITE,
+
+    VDP_RAM_ACCESS_MODE__VRAM_READ,
+    VDP_RAM_ACCESS_MODE__CRAM_READ,
+    VDP_RAM_ACCESS_MODE__VSRAM_READ,
+} VdpRamAccessMode;
+
+void vdp__set_ram_address(VdpRamAccessMode access_mode, u16 adr, bool vram_to_vram_copy, bool dma);
+
 
 #endif // SONIC_ANYWHERE_VPU_H
