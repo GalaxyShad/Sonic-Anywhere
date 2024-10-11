@@ -90,3 +90,6 @@ void game_vdp__palette_foreach(GameVdpPaletteLayerID pal_id, MDColor (*func)(MDC
 void game_vdp__palette_set_color(u8 index, MDColor color) {
     RAISE_NOT_IMPLEMENTED
 }
+void game_vdp__set_vblank_routine_counter(u8 routine) {
+    RAISE_NOT_IMPLEMENTED
+}

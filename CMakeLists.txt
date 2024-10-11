@@ -26,6 +26,8 @@ add_executable(sonic_anywhere
         src_backend_desktop/mdcolor.c
         src/gamevdp.h
         src/gamevdp.c
+        include_backend/mem.h
+        src_backend_desktop/mem.c
 )
 
 target_include_directories(sonic_anywhere PRIVATE ${SDL2_INCLUDE_DIRS})

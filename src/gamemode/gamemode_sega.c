@@ -5,6 +5,7 @@
 #include "include_backend/plc.h"
 #include "include_backend/tinyint.h"
 #include "include_backend/vpu.h"
+#include "include_backend/mem.h"
 
 #include "../compressors.h"
 
@@ -17,12 +18,6 @@
 //  Sega screen
 // ---------------------------------------------------------------------------
 
-static u16 palette_fade_start__;
-static u8 palette_fade_size__;
-
-static u8 v_vbla_routine__;
-static u8 palette__[16];
-
 
 static void fadeout_to_black__() {
     //    FadeOut_ToBlack:
@@ -32,11 +27,10 @@ static void fadeout_to_black__() {
 
 static void palette_fadeout__() {
     //    PaletteFadeOut
-    palette_fade_start__ = 0x003F;
+    u16 palette_fade_start = 0x003F;
 
     for (u16 i = 0; i < 0x15; i++) {
-        v_vbla_routine__ = 0x12;
-
+        game_vdp__set_vblank_routine_counter(0x12);
         vpu__sleep_until_vblank();
         fadeout_to_black__();
         plc__run();
@@ -160,12 +154,9 @@ void game_mode_sega() {
     plc__clear();
     palette_fadeout__();
 
-#define VRAM_FG 0xC000
-#define VRAM_BG 0xE000
-
     vpu__set_color_mode(VPU_COLOR_MODE_8_COLOR);
-    vpu__set_address_for_layer(VPU_LAYER__FOREGROUND, VRAM_FG);
-    vpu__set_address_for_layer(VPU_LAYER__BACKGROUND, VRAM_BG);
+    vpu__set_address_for_layer(VPU_LAYER__FOREGROUND, mem__vram_foreground());
+    vpu__set_address_for_layer(VPU_LAYER__BACKGROUND, mem__vram_background());
     vpu__set_background_color(0, 0);
     vpu__set_scrolling_mode(VPU_VSCROLL_MODE__FULL_SCROLL, VPU_HSCROLL_MODE__FULL_SCROLL, 0);
 
@@ -193,19 +184,18 @@ void game_mode_sega() {
     ReadonlyByteArray sega_logo_mappings = resource_store__get(
       use_japanese_logo ? RESOURCE__TILEMAPS__SEGA_LOGO_JP1_ENI : RESOURCE__TILEMAPS__SEGA_LOGO_ENI
     );
-    u8* buffer = vpu__get_mutable_memory_256x256_tile_mappings();
-    compressors__enigma_decompress(sega_logo_mappings.arr, sega_logo_mappings.size, buffer, 256*256, 0);
 
-    ReadonlyByteArray buff_arr = {buffer, 256 * 256};
-    vpu__copy_tilemap_to_layer_r(VPU_LAYER__BACKGROUND, 510, &buff_arr, 24, 8);
+    compressors__enigma_decompress(sega_logo_mappings.arr, sega_logo_mappings.size, mem__chunks()->arr, mem__chunks()->size, 0);
 
-    ReadonlyByteArray buff_arr2 = {buffer + (24 * 8 * 2), 256 * 256};
-    vpu__copy_tilemap_to_layer_r(VPU_LAYER__FOREGROUND, 0, &buff_arr2, 40, 28);
+    vpu__copy_tilemap_to_layer_r(VPU_LAYER__BACKGROUND, 510, mem__chunks(), 24, 8);
+
+    MutableByteArray fg = mem__chunks_shifted(24 * 8 * 2);
+    vpu__copy_tilemap_to_layer_r(VPU_LAYER__FOREGROUND, 0, &fg, 40, 28);
 
     // Decided to apply revision 1 fix
     if (use_japanese_logo) {
-        ReadonlyByteArray white_rect = {buffer + 0xA40, 256 * 256};
-        vpu__copy_tilemap_to_layer_r(VPU_LAYER__FOREGROUND, 0x53A, &white_rect, 3, 2);
+//        ReadonlyByteArray white_rect = {buffer + 0xA40, 256 * 256};
+//        vpu__copy_tilemap_to_layer_r(VPU_LAYER__FOREGROUND, 0x53A, &white_rect, 3, 2);
     }
 
     // .loadpal
@@ -222,19 +212,19 @@ void game_mode_sega() {
 
     // Sega_WaitPal:
     do {
-        //    move.b	#2,(v_vbla_routine).w
+        game_vdp__set_vblank_routine_counter(2);
         vpu__sleep_until_vblank();
         game_vdp__load_palette(GAME_VDP_PALETTE_ID__SEGA_LOGO);
     } while (palette_cycle_sega__() != 0);
 
     audio__play_sound_special(SND__SEGA);
-    //  move.b	#$14,(v_vbla_routine).w
+    game_vdp__set_vblank_routine_counter(0x14);
     vpu__sleep_until_vblank();
     u16 demo_length = 0x1E;
 
     //    Sega_WaitEnd:
     while (1) {
-        //    move.b	#2,(v_vbla_routine).w
+        game_vdp__set_vblank_routine_counter(2);
         vpu__sleep_until_vblank();
 
         if ((demo_length == 0) || input__is_btn_pressed(BUTTON_CODE__START)) {

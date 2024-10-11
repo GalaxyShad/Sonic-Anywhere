@@ -44,11 +44,6 @@ u8* vpu__get_mutable_memory_256x256_tile_mappings() {
     return tile_mapping_mem__;
 }
 
-void vpu__set_address_for_layer(VpuLayer layer, u16 adr) {
-    LOG("called [%s] VDP Plane [%s] addr set to $04X", __func__, (layer == VPU_LAYER__BACKGROUND) ? "BG" : "FG", adr)
-    RAISE_NOT_IMPLEMENTED
-}
-
 
 ///////////////////////////
 ///////////////////////////
@@ -60,19 +55,25 @@ static SDL_Renderer* renderer__ = NULL;
 
 typedef struct Plane {
     u8* data;
+    size data_size;
     size cell_width;
     size cell_height;
 } Plane;
 
-static u8 foreground__[900000] = {0};
-static u8 background__[900000] = {0};
-
-static Plane plane_foreground = {.data = foreground__, .cell_width = 1, .cell_height = 1};
-
-static Plane plane_background = {.data = foreground__, .cell_width = 1, .cell_height = 1};
-
-
 static u8 tiles__[4096 * 16];
+
+static Plane planes__[2] = {};
+
+void vpu__set_address_for_layer(VpuLayer layer, MutableByteArray* mem) {
+    LOG("called [%s] VDP Plane [%s] addr set to %p", __func__, (layer == VPU_LAYER__BACKGROUND) ? "BG" : "FG", mem->arr)
+
+    Plane* p = planes__ + layer;
+
+    p->data = mem->arr;
+    p->data_size = mem->size;
+    p->cell_width = 1;
+    p->cell_height = 1;
+}
 
 void vpu__set_window(const u8* window, size window_size) {
     for (int i = 0; i < window_size; i++) {
@@ -97,26 +98,25 @@ static SDL_Surface* make_tile__(int tile_index, int pal_index) {
         u8 px = tile[i];
 
         u8 a = (px & 0xF0) >> 4;
-        u8 b = px & 0x0F;
-
-        u8 x = i % 4;
-        u8 y = i / 4;
-
-        u32* ss = (u32*) temp_surf->pixels;
+        u8 b = (px & 0x0F) >> 0;
 
         u32 color_a = (a != 0) ? (0xFF000000 | mdcolor_to_sdl__(palette__[pal_index * 16 + a - 1])) : 0;
         u32 color_b = (b != 0) ? (0xFF000000 | mdcolor_to_sdl__(palette__[pal_index * 16 + b - 1])) : 0;
 
+        u8 x = (i % 4) * 2;
+        u8 y = i / 4;
 
-        ss[y * 8 + (x * 2 + 0)] = color_a;
-        ss[y * 8 + (x * 2 + 1)] = color_b;
+        u32* ss = (u32*) temp_surf->pixels;
+
+        ss[y * 8 + (x + 0)] = color_a;
+        ss[y * 8 + (x + 1)] = color_b;
     }
 
     return temp_surf;
 }
 
 static void draw_plane__(Plane* plane, int x, int y) {
-    for (int i = 0; i < 9000 / 2; i++) {
+    for (int i = 0; i < 0x2000 / 2; i++) {
         if ((i / plane->cell_width) >= plane->cell_height)
             break;
 
@@ -147,14 +147,13 @@ static void draw_plane__(Plane* plane, int x, int y) {
 
         SDL_Texture* tex = SDL_CreateTextureFromSurface(renderer__, tile);
 
-
         int sdl_flip = 0;
 
         if (vert_flip)
             sdl_flip |= SDL_FLIP_VERTICAL;
         if (hor_flip)
             sdl_flip |= SDL_FLIP_HORIZONTAL;
-        //        SDL_RenderCopy(renderer__, tex, &r_src, &r_dst);
+
         SDL_RenderCopyEx(renderer__, tex, &r_src, &r_dst, 0, NULL, sdl_flip);
 
         SDL_DestroyTexture(tex);
@@ -220,8 +219,8 @@ void vpu__sleep_until_vblank() {
 
     vpu__debug_draw_palette__();
 
-    draw_plane__(&plane_background, 0, 100);
-    draw_plane__(&plane_foreground, 400, 100);
+    draw_plane__(&planes__[VPU_LAYER__BACKGROUND], 0, 100);
+    draw_plane__(&planes__[VPU_LAYER__FOREGROUND], 400, 100);
 
     vpu__debug_draw_tiles__();
 
@@ -239,17 +238,9 @@ void vpu__copy_tilemap_to_layer_r(
       (layer == VPU_LAYER__BACKGROUND) ? "BG" : "FG", shift, cells_width, cells_height
     )
 
-    u8* ptr = (layer == VPU_LAYER__BACKGROUND) ? background__ : foreground__;
+    Plane* p = planes__ + layer;
 
-    for (int i = 0; i < tilemap->size; i++) {
-        ptr[i] = tilemap->arr[i];
-    }
-
-    if (layer == VPU_LAYER__BACKGROUND) {
-        plane_background.cell_width = cells_width;
-        plane_background.cell_height = cells_height;
-    } else {
-        plane_foreground.cell_width = cells_width;
-        plane_foreground.cell_height = cells_height;
-    }
+    SDL_memcpy(p->data, tilemap->arr, p->data_size);
+    p->cell_width = cells_width;
+    p->cell_height = cells_height;
 }

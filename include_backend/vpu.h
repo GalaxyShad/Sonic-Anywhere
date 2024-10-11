@@ -34,21 +34,14 @@ typedef enum VpuHScrollMode {
 
 void vpu__set_scrolling_mode(VpuVScrollMode vertical_mode, VpuHScrollMode horizontal_mode, int enable_interrupt);
 
-
-
-
 void vpu__set_window(const u8* window, size window_size);
-
-
-
-u8* vpu__get_mutable_memory_256x256_tile_mappings();
 
 typedef enum VpuLayer {
     VPU_LAYER__BACKGROUND,
     VPU_LAYER__FOREGROUND
 } VpuLayer;
 
-void vpu__set_address_for_layer(VpuLayer layer, u16 adr);
+void vpu__set_address_for_layer(VpuLayer layer, MutableByteArray* mem);
 void vpu__copy_tilemap_to_layer_r(VpuLayer layer, i32 shift, const ReadonlyByteArray* tilemap, size cells_width, size cells_height);
 
 
