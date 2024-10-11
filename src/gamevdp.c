@@ -76,7 +76,7 @@ void game_vdp__load_palette(GameVdpPaletteID pal_id) {
 
     ReadonlyByteArray res = resource_store__get(res_id);
 
-    vpu_palette__load(&res);
+    vdp_palette__load(&res);
 }
 
 void game_vdp__set_palette_water_state(GameVdpPaletteWaterState water_state) {

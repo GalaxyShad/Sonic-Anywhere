@@ -13,10 +13,10 @@ void game__load_game_mode(GameMode gm) {
 }
 
 void game__init() {
-    vpu__init();
+    vdp__init();
 
-    vpu__set_address_for_layer(VPU_LAYER__BACKGROUND, mem__vram_background());
-    vpu__set_address_for_layer(VPU_LAYER__FOREGROUND, mem__vram_foreground());
+    vdp__set_address_for_plane(VDP_PLANE__BACKGROUND, mem__vram_background());
+    vdp__set_address_for_plane(VDP_PLANE__FOREGROUND, mem__vram_foreground());
 
     // TODO clear_ram();
 

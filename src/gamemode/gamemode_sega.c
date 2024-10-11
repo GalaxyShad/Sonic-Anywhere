@@ -31,7 +31,7 @@ static void palette_fadeout__() {
 
     for (u16 i = 0; i < 0x15; i++) {
         game_vdp__set_vblank_routine_counter(0x12);
-        vpu__sleep_until_vblank();
+        vdp__sleep_until_vblank();
         fadeout_to_black__();
         plc__run();
     }
@@ -154,11 +154,11 @@ void game_mode_sega() {
     plc__clear();
     palette_fadeout__();
 
-    vpu__set_color_mode(VPU_COLOR_MODE_8_COLOR);
-    vpu__set_address_for_layer(VPU_LAYER__FOREGROUND, mem__vram_foreground());
-    vpu__set_address_for_layer(VPU_LAYER__BACKGROUND, mem__vram_background());
-    vpu__set_background_color(0, 0);
-    vpu__set_scrolling_mode(VPU_VSCROLL_MODE__FULL_SCROLL, VPU_HSCROLL_MODE__FULL_SCROLL, 0);
+    vdp__set_color_mode(VDP_COLOR_MODE_8_COLOR);
+    vdp__set_address_for_plane(VDP_PLANE__FOREGROUND, mem__vram_foreground());
+    vdp__set_address_for_plane(VDP_PLANE__BACKGROUND, mem__vram_background());
+    vdp__set_background_color(0, 0);
+    vdp__set_scrolling_mode(VDP_VSCROLL_MODE__FULL_SCROLL, VDP_HSCROLL_MODE__FULL_SCROLL, 0);
 
     game_vdp__set_palette_water_state(GAME_VDP_PALETTE_WATER_STATE__DRY_OR_PARTIALLY);
 
@@ -168,14 +168,14 @@ void game_mode_sega() {
     //		andi.b	#$BF,d0
     //		move.w	d0,(vdp_control_port).l
 
-    vpu__clear_screen();
+    vdp__clear_screen();
 
     int use_japanese_logo = 0; // TODO
 
     ReadonlyByteArray sega_logo_patterns_nem =
       resource_store__get(use_japanese_logo ? RESOURCE__ARTNEM__SEGA_LOGO_JP1_NEM : RESOURCE__ARTNEM__SEGA_LOGO_NEM);
 
-    vpu__set_window(sega_logo_patterns_nem.arr, sega_logo_patterns_nem.size);
+    vdp__set_window(sega_logo_patterns_nem.arr, sega_logo_patterns_nem.size);
 
 //    compressors__nemesis_decompress(
 //      sega_logo_patterns_nem.arr, sega_logo_patterns_nem.size, vpu__get_mutable_direct_memory(), 5024
@@ -187,15 +187,15 @@ void game_mode_sega() {
 
     compressors__enigma_decompress(sega_logo_mappings.arr, sega_logo_mappings.size, mem__chunks()->arr, mem__chunks()->size, 0);
 
-    vpu__copy_tilemap_to_layer_r(VPU_LAYER__BACKGROUND, 510, mem__chunks(), 24, 8);
+    vdp__copy_tilemap_to_layer_r(VDP_PLANE__BACKGROUND, 510, mem__chunks(), 24, 8);
 
     MutableByteArray fg = mem__chunks_shifted(24 * 8 * 2);
-    vpu__copy_tilemap_to_layer_r(VPU_LAYER__FOREGROUND, 0, &fg, 40, 28);
+    vdp__copy_tilemap_to_layer_r(VDP_PLANE__FOREGROUND, 0, &fg, 40, 28);
 
     // Decided to apply revision 1 fix
     if (use_japanese_logo) {
 //        ReadonlyByteArray white_rect = {buffer + 0xA40, 256 * 256};
-//        vpu__copy_tilemap_to_layer_r(VPU_LAYER__FOREGROUND, 0x53A, &white_rect, 3, 2);
+//        vdp__copy_tilemap_to_layer_r(VDP_PLANE__FOREGROUND, 0x53A, &white_rect, 3, 2);
     }
 
     // .loadpal
@@ -213,19 +213,19 @@ void game_mode_sega() {
     // Sega_WaitPal:
     do {
         game_vdp__set_vblank_routine_counter(2);
-        vpu__sleep_until_vblank();
+        vdp__sleep_until_vblank();
         game_vdp__load_palette(GAME_VDP_PALETTE_ID__SEGA_LOGO);
     } while (palette_cycle_sega__() != 0);
 
     audio__play_sound_special(SND__SEGA);
     game_vdp__set_vblank_routine_counter(0x14);
-    vpu__sleep_until_vblank();
+    vdp__sleep_until_vblank();
     u16 demo_length = 0x1E;
 
     //    Sega_WaitEnd:
     while (1) {
         game_vdp__set_vblank_routine_counter(2);
-        vpu__sleep_until_vblank();
+        vdp__sleep_until_vblank();
 
         if ((demo_length == 0) || input__is_btn_pressed(BUTTON_CODE__START)) {
             // Sega_GotoTitle:

@@ -8,7 +8,7 @@ static u8 tile_mapping_mem__[256 * 256];
 
 ////////////////////////////////////////////////////////
 
-void vpu_palette__load(const ReadonlyByteArray* palette){
+void vdp_palette__load(const ReadonlyByteArray* palette){
     LOG("called [%s] pal_id = %d", __func__)
 
     for (int i = 0; i < palette->size / 2; i++) {
@@ -16,28 +16,28 @@ void vpu_palette__load(const ReadonlyByteArray* palette){
     }
 }
 
-void vpu__set_color_mode(VpuColorMode mode) {
+void vdp__set_color_mode(VdpColorMode mode) {
     LOG("called [%s] VDP ColorMode = %d", __func__, mode)
     RAISE_NOT_IMPLEMENTED
 }
 
-void vpu__set_background_color(u8 palette_number, u8 color_number) {
+void vdp__set_background_color(u8 palette_number, u8 color_number) {
     LOG("called [%s] VDP BG color was set to pal_row = %d and index = %d", __func__, palette_number, color_number)
     RAISE_NOT_IMPLEMENTED
 }
 
-void vpu__clear_screen() {
+void vdp__clear_screen() {
     LOG("called [%s] VDP screen cleared", __func__)
     RAISE_NOT_IMPLEMENTED
 }
 
-void vpu__set_scrolling_mode(VpuVScrollMode vertical_mode, VpuHScrollMode horizontal_mode, int enable_interrupt){LOG(
+void vdp__set_scrolling_mode(VdpVScrollMode vertical_mode, VdpHScrollMode horizontal_mode, int enable_interrupt){LOG(
   "called [%s] VDP srolling mode set to VScroll = %s, HScroll = %s", __func__,
-  (vertical_mode == VPU_VSCROLL_MODE__FULL_SCROLL) ? "VPU_VSCROLL_MODE__FULL_SCROLL" : "VPU_VSCROLL_MODE__EACH_2_CELL",
-  (horizontal_mode == VPU_HSCROLL_MODE__FULL_SCROLL)   ? "VPU_HSCROLL_MODE__FULL_SCROLL"
-  : (horizontal_mode == VPU_HSCROLL_MODE__PROHIBITED)  ? "VPU_HSCROLL_MODE__PROHIBITED"
-  : (horizontal_mode == VPU_HSCROLL_MODE__EACH_1_CELL) ? "VPU_HSCROLL_MODE__EACH_1_CELL"
-                                                       : "VPU_HSCROLL_MODE__EACH_1_LINE"
+  (vertical_mode == VDP_VSCROLL_MODE__FULL_SCROLL) ? "VDP_VSCROLL_MODE__FULL_SCROLL" : "VDP_VSCROLL_MODE__EACH_2_CELL",
+  (horizontal_mode == VDP_HSCROLL_MODE__FULL_SCROLL)   ? "VDP_HSCROLL_MODE__FULL_SCROLL"
+  : (horizontal_mode == VDP_HSCROLL_MODE__PROHIBITED)  ? "VDP_HSCROLL_MODE__PROHIBITED"
+  : (horizontal_mode == VDP_HSCROLL_MODE__EACH_1_CELL) ? "VDP_HSCROLL_MODE__EACH_1_CELL"
+                                                       : "VDP_HSCROLL_MODE__EACH_1_LINE"
 ) RAISE_NOT_IMPLEMENTED}
 
 u8* vpu__get_mutable_memory_256x256_tile_mappings() {
@@ -64,10 +64,10 @@ static u8 tiles__[4096 * 16];
 
 static Plane planes__[2] = {};
 
-void vpu__set_address_for_layer(VpuLayer layer, MutableByteArray* mem) {
-    LOG("called [%s] VDP Plane [%s] addr set to %p", __func__, (layer == VPU_LAYER__BACKGROUND) ? "BG" : "FG", mem->arr)
+void vdp__set_address_for_plane(VdpPlane plane_id, MutableByteArray* mem) {
+    LOG("called [%s] VDP Plane [%s] addr set to %p", __func__, (plane_id == VDP_PLANE__BACKGROUND) ? "BG" : "FG", mem->arr)
 
-    Plane* p = planes__ + layer;
+    Plane* p = planes__ + plane_id;
 
     p->data = mem->arr;
     p->data_size = mem->size;
@@ -75,7 +75,7 @@ void vpu__set_address_for_layer(VpuLayer layer, MutableByteArray* mem) {
     p->cell_height = 1;
 }
 
-void vpu__set_window(const u8* window, size window_size) {
+void vdp__set_window(const u8* window, size window_size) {
     for (int i = 0; i < window_size; i++) {
         tiles__[i] = window[i];
     }
@@ -161,7 +161,7 @@ static void draw_plane__(Plane* plane, int x, int y) {
     }
 }
 
-void vpu__init() {
+void vdp__init() {
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
         LOG_ERROR("could not initialize sdl2: %s\n", SDL_GetError())
         return;
@@ -214,13 +214,13 @@ static void vpu__debug_draw_tiles__() {
     }
 }
 
-void vpu__sleep_until_vblank() {
+void vdp__sleep_until_vblank() {
     SDL_RenderClear(renderer__);
 
     vpu__debug_draw_palette__();
 
-    draw_plane__(&planes__[VPU_LAYER__BACKGROUND], 0, 100);
-    draw_plane__(&planes__[VPU_LAYER__FOREGROUND], 400, 100);
+    draw_plane__(&planes__[VDP_PLANE__BACKGROUND], 0, 100);
+    draw_plane__(&planes__[VDP_PLANE__FOREGROUND], 400, 100);
 
     vpu__debug_draw_tiles__();
 
@@ -230,15 +230,15 @@ void vpu__sleep_until_vblank() {
 }
 
 
-void vpu__copy_tilemap_to_layer_r(
-  VpuLayer layer, i32 shift, const ReadonlyByteArray* tilemap, size cells_width, size cells_height
+void vdp__copy_tilemap_to_layer_r(
+  VdpPlane plane_id, i32 shift, const ReadonlyByteArray* tilemap, size cells_width, size cells_height
 ) {
     LOG(
       "called [%s] VDP Plane [%s] shift = %d, cells_width = %d, cells_height = %d", __func__,
-      (layer == VPU_LAYER__BACKGROUND) ? "BG" : "FG", shift, cells_width, cells_height
+      (plane_id == VDP_PLANE__BACKGROUND) ? "BG" : "FG", shift, cells_width, cells_height
     )
 
-    Plane* p = planes__ + layer;
+    Plane* p = planes__ + plane_id;
 
     SDL_memcpy(p->data, tilemap->arr, p->data_size);
     p->cell_width = cells_width;
