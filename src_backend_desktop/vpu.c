@@ -3,6 +3,7 @@
 #include "include_backend/debug.h"
 
 static MDColor palette__[4 * 16];
+static u8 palette_bg_index__ = 0;
 
 static u8 tile_mapping_mem__[256 * 256];
 
@@ -23,7 +24,7 @@ void vdp__set_color_mode(VdpColorMode mode) {
 
 void vdp__set_background_color(u8 palette_number, u8 color_number) {
     LOG("called [%s] VDP BG color was set to pal_row = %d and index = %d", __func__, palette_number, color_number)
-    RAISE_NOT_IMPLEMENTED
+    palette_bg_index__ = palette_number * 16 + color_number;
 }
 
 void vdp__clear_screen() {
@@ -60,9 +61,13 @@ typedef struct Plane {
     size cell_height;
 } Plane;
 
+
+
 static u8 tiles__[4096 * 16];
 
 static Plane planes__[2] = {};
+
+static u8 cells_hor_count__ = 40;
 
 void vdp__set_address_for_plane(VdpPlane plane_id, MutableByteArray* mem) {
     LOG("called [%s] VDP Plane [%s] addr set to %p", __func__, (plane_id == VDP_PLANE__BACKGROUND) ? "BG" : "FG", mem->arr)
@@ -92,7 +97,13 @@ static u32 mdcolor_to_sdl__(u16 mdcolor) {
 static SDL_Surface* make_tile__(int tile_index, int pal_index) {
     u8* tile = tiles__ + tile_index * 32;
 
-    SDL_Surface* temp_surf = SDL_CreateRGBSurface(0, 8, 8, 32, 0, 0, 0, 0);
+    SDL_Surface* temp_surf = SDL_CreateRGBSurface(0, 8, 8, 32, 0, 0, 0, 0xFF000000);
+
+    u32 transparent = mdcolor_to_sdl__(palette__[0]);
+
+    SDL_FillRect(temp_surf, NULL, 0);
+
+    SDL_SetColorKey(temp_surf, 1, 0);
 
     for (int i = 0; i < 32; i++) {
         u8 px = tile[i];
@@ -116,8 +127,13 @@ static SDL_Surface* make_tile__(int tile_index, int pal_index) {
 }
 
 static void draw_plane__(Plane* plane, int x, int y) {
-    for (int i = 0; i < 0x2000 / 2; i++) {
-        if ((i / plane->cell_width) >= plane->cell_height)
+
+//    int plane_width = plane->cell_width;
+    int plane_width = cells_hor_count__;
+    int plane_height = 28;
+
+    for (int i = 0; i < plane->data_size / 2; i++) {
+        if ((i / plane_width) >= plane_height)
             break;
 
         u16 a = plane->data[i * 2 + 0];
@@ -137,10 +153,10 @@ static void draw_plane__(Plane* plane, int x, int y) {
 
         SDL_Rect r_src = {0, 0, 8, 8};
 
-        int scale = 2;
+        int scale = 1;
 
         SDL_Rect r_dst = {
-          (pos % plane->cell_width) * 8 * scale + x, (pos / plane->cell_width) * 8 * scale + y, 8 * scale, 8 * scale
+          (pos % plane_width) * 8 * scale + x, (pos / plane_width) * 8 * scale + y, 8 * scale, 8 * scale
         };
 
         SDL_Surface* tile = make_tile__(tile_index, pal_id);
@@ -214,19 +230,44 @@ static void vpu__debug_draw_tiles__() {
     }
 }
 
-void vdp__sleep_until_vblank() {
+static void sdl_set_draw_color_default() {
+    SDL_SetRenderDrawColor(renderer__, 0, 0, 0, 0xFF);
+}
+
+static void sdl_set_draw_color_u32__(u32 color) {
+    u8 alpha = 0xFF & (color >> 24);
+
+    u8 r = 0xFF & (color >> 16);
+    u8 g = 0xFF & (color >> 8);
+    u8 b = 0xFF & (color >> 0);
+
+    SDL_SetRenderDrawColor(renderer__, r, g, b, alpha);
+}
+
+static void vdp__screen_clear__() {
+    u32 transparent = mdcolor_to_sdl__(palette__[palette_bg_index__]);
+
+//    sdl_set_draw_color_u32__(transparent);
     SDL_RenderClear(renderer__);
+    sdl_set_draw_color_default();
+}
+
+void vdp__sleep_until_vblank() {
+    vdp__screen_clear__();
 
     vpu__debug_draw_palette__();
 
     draw_plane__(&planes__[VDP_PLANE__BACKGROUND], 0, 100);
-    draw_plane__(&planes__[VDP_PLANE__FOREGROUND], 400, 100);
+    draw_plane__(&planes__[VDP_PLANE__FOREGROUND], 0, 100);
+
+    draw_plane__(&planes__[VDP_PLANE__BACKGROUND], 400, 100);
+    draw_plane__(&planes__[VDP_PLANE__FOREGROUND], 800, 100);
 
     vpu__debug_draw_tiles__();
 
     SDL_RenderPresent(renderer__);
 
-    SDL_Delay(100);
+//    SDL_Delay(100);
 }
 
 
@@ -240,7 +281,20 @@ void vdp__copy_tilemap_to_layer_r(
 
     Plane* p = planes__ + plane_id;
 
-    SDL_memcpy(p->data, tilemap->arr, p->data_size);
+    u16* src = (u16*)tilemap->arr;
+    u16* dst = (u16*)p->data;
+
+    shift *= 2;
+
+    u16 a = (shift >> 8) & 0xFF;
+    u16 b = shift & 0xFF;
+
+    for (int i = 0; i < cells_height; i++) {
+        for (int j = 0; j < cells_width; j++) {
+            dst[(i + a) * cells_hor_count__ + j + b] = src[i * cells_width + j];
+        }
+    }
+
     p->cell_width = cells_width;
     p->cell_height = cells_height;
 }

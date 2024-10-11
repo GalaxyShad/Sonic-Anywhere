@@ -187,6 +187,7 @@ void game_mode_sega() {
 
     compressors__enigma_decompress(sega_logo_mappings.arr, sega_logo_mappings.size, mem__chunks()->arr, mem__chunks()->size, 0);
 
+//    vdp__copy_tilemap_to_layer_r(VDP_PLANE__BACKGROUND, 0x510, mem__chunks(), 24, 8);
     vdp__copy_tilemap_to_layer_r(VDP_PLANE__BACKGROUND, 510, mem__chunks(), 24, 8);
 
     MutableByteArray fg = mem__chunks_shifted(24 * 8 * 2);
