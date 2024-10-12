@@ -14,9 +14,9 @@ static u8 tile_mapping_mem__[256 * 256];
 void vdp_palette__load(const ReadonlyByteArray* palette) {
     LOG("called [%s] pal_id = %d", __func__)
 
-//    for (int i = 0; i < palette->size / 2; i++) {
-//        palette__[i] = ((MDColor*)palette)[i];
-//    }
+    //    for (int i = 0; i < palette->size / 2; i++) {
+    //        palette__[i] = ((MDColor*)palette)[i];
+    //    }
 
     for (int i = 0; i < palette->size / 2; i++) {
         palette__[i] = (palette->arr[i * 2] << 8) | palette->arr[i * 2 + 1];
@@ -44,14 +44,18 @@ void vdp__clear_screen() {
     RAISE_NOT_IMPLEMENTED
 }
 
-void vdp__set_scrolling_mode(VdpVScrollMode vertical_mode, VdpHScrollMode horizontal_mode, int enable_interrupt){LOG(
-  "called [%s] VDP srolling mode set to VScroll = %s, HScroll = %s", __func__,
-  (vertical_mode == VDP_VSCROLL_MODE__FULL_SCROLL) ? "VDP_VSCROLL_MODE__FULL_SCROLL" : "VDP_VSCROLL_MODE__EACH_2_CELL",
-  (horizontal_mode == VDP_HSCROLL_MODE__FULL_SCROLL)   ? "VDP_HSCROLL_MODE__FULL_SCROLL"
-  : (horizontal_mode == VDP_HSCROLL_MODE__PROHIBITED)  ? "VDP_HSCROLL_MODE__PROHIBITED"
-  : (horizontal_mode == VDP_HSCROLL_MODE__EACH_1_CELL) ? "VDP_HSCROLL_MODE__EACH_1_CELL"
-                                                       : "VDP_HSCROLL_MODE__EACH_1_LINE"
-) RAISE_NOT_IMPLEMENTED}
+void vdp__set_scrolling_mode(VdpVScrollMode vertical_mode, VdpHScrollMode horizontal_mode, int enable_interrupt) {
+    LOG(
+      "called [%s] VDP srolling mode set to VScroll = %s, HScroll = %s", __func__,
+      (vertical_mode == VDP_VSCROLL_MODE__FULL_SCROLL) ? "VDP_VSCROLL_MODE__FULL_SCROLL"
+                                                       : "VDP_VSCROLL_MODE__EACH_2_CELL",
+      (horizontal_mode == VDP_HSCROLL_MODE__FULL_SCROLL)   ? "VDP_HSCROLL_MODE__FULL_SCROLL"
+      : (horizontal_mode == VDP_HSCROLL_MODE__PROHIBITED)  ? "VDP_HSCROLL_MODE__PROHIBITED"
+      : (horizontal_mode == VDP_HSCROLL_MODE__EACH_1_CELL) ? "VDP_HSCROLL_MODE__EACH_1_CELL"
+                                                           : "VDP_HSCROLL_MODE__EACH_1_LINE"
+    )
+    RAISE_NOT_IMPLEMENTED
+}
 
 void vdp__set_ram_address(VdpRamAccessMode access_mode, u16 adr, bool vram_to_vram_copy, bool dma) {
     RAISE_NOT_IMPLEMENTED
@@ -61,9 +65,10 @@ void vdp__set_ram_address(VdpRamAccessMode access_mode, u16 adr, bool vram_to_vr
 ///////////////////////////
 ///////////////////////////
 
-#include <SDL3/SDL.h>
-#include <string.h>
 #include "text_renderer.h"
+#include <SDL3/SDL.h>
+#include <stdlib.h>
+#include <string.h>
 
 static SDL_Window* window__ = NULL;
 static SDL_Renderer* renderer__ = NULL;
@@ -74,7 +79,6 @@ typedef struct Plane {
 } Plane;
 
 
-
 static u8 tiles__[4096 * 16];
 
 static Plane planes__[2] = {};
@@ -82,7 +86,9 @@ static Plane planes__[2] = {};
 static u8 cells_hor_count__ = 40;
 
 void vdp__set_address_for_plane(VdpPlane plane_id, MutableByteArray* mem) {
-    LOG("called [%s] VDP Plane [%s] addr set to %p", __func__, (plane_id == VDP_PLANE__BACKGROUND) ? "BG" : "FG", mem->arr)
+    LOG(
+      "called [%s] VDP Plane [%s] addr set to %p", __func__, (plane_id == VDP_PLANE__BACKGROUND) ? "BG" : "FG", mem->arr
+    )
 
     Plane* p = planes__ + plane_id;
 
@@ -90,10 +96,16 @@ void vdp__set_address_for_plane(VdpPlane plane_id, MutableByteArray* mem) {
     p->data_size = mem->size;
 }
 
+static SDL_Texture* vdp_window_tex__ = NULL;
+static int is_vdp_window_changed__ = 0;
+
+
 void vdp__set_window(const u8* window, size window_size) {
     for (int i = 0; i < window_size; i++) {
         tiles__[i] = window[i];
     }
+
+    is_vdp_window_changed__ = 1;
 }
 
 static u32 mdcolor_to_sdl__(u16 mdcolor) {
@@ -155,16 +167,16 @@ static void draw_plane__(Plane* plane, int x, int y, int scale) {
 
         i32 pos = i;
 
-        SDL_FRect r_src = {0, 0, 8, 8};
+        SDL_FRect r_src = {0, tile_index * 8, 8, 8};
 
         SDL_FRect r_dst = {
           (pos % plane_width) * 8 * scale + x, (pos / plane_width) * 8 * scale + y, 8 * scale, 8 * scale
         };
 
-        SDL_Surface* tile = make_tile__(tile_index, pal_id);
-
-        SDL_Texture* tex = SDL_CreateTextureFromSurface(renderer__, tile);
-        SDL_SetTextureScaleMode(tex, SDL_SCALEMODE_NEAREST);
+        //        SDL_Surface* tile = make_tile__(tile_index, pal_id);
+        //
+        //        SDL_Texture* tex = SDL_CreateTextureFromSurface(renderer__, tile);
+        //        SDL_SetTextureScaleMode(tex, SDL_SCALEMODE_NEAREST);
 
         int sdl_flip = 0;
 
@@ -173,14 +185,15 @@ static void draw_plane__(Plane* plane, int x, int y, int scale) {
         if (hor_flip)
             sdl_flip |= SDL_FLIP_HORIZONTAL;
 
-        SDL_RenderTextureRotated(renderer__, tex, &r_src, &r_dst, 0, NULL, sdl_flip);
+        SDL_RenderTextureRotated(renderer__, vdp_window_tex__, &r_src, &r_dst, 0, NULL, sdl_flip);
 
-        SDL_DestroyTexture(tex);
+        //        SDL_RenderTextureRotated(renderer__, tex, &r_src, &r_dst, 0, NULL, sdl_flip);
 
-        SDL_DestroySurface(tile);
+        //        SDL_DestroyTexture(tex);
+
+        //        SDL_DestroySurface(tile);
     }
 }
-
 
 
 static void sdl_set_draw_color_default__() {
@@ -247,15 +260,13 @@ static void vdp__screen_clear__() {
 }
 
 
-
-
 void vdp__copy_tilemap_to_layer_r(
   VdpPlane plane_id, u8 shift_x, u8 shift_y, const ReadonlyByteArray* tilemap, size cells_width, size cells_height
 ) {
     Plane* p = planes__ + plane_id;
 
-    u16* src = (u16*)tilemap->arr;
-    u16* dst = (u16*)p->data;
+    u16* src = (u16*) tilemap->arr;
+    u16* dst = (u16*) p->data;
 
     for (int i = 0; i < cells_height * cells_width; i++) {
         int x = i % cells_width;
@@ -274,8 +285,7 @@ void vdp__init() {
         return;
     }
 
-    window__ =
-      SDL_CreateWindow("hello_sdl2", 1280, 720, 0);
+    window__ = SDL_CreateWindow("hello_sdl2", 1280, 720, 0);
     if (window__ == NULL) {
         LOG_ERROR("could not create window: %s\n", SDL_GetError())
         return;
@@ -292,13 +302,57 @@ void vdp__render() {
 
     vdp__screen_clear__();
 
+    if (is_vdp_window_changed__) {
+        if (vdp_window_tex__ != NULL) {
+            SDL_DestroyTexture(vdp_window_tex__);
+        }
+
+        static SDL_Color pal[16];
+        for (int i = 0; i < 16; i++) {
+            SDL_Color col = {
+              20 + i * 20,
+              20 + i * 20,
+              20 + i * 20,
+              0xFF
+            };
+
+            pal[i] = col;
+
+        }
+
+        SDL_Surface* surf = SDL_CreateSurfaceFrom(8, (4096 * 16) / 8, SDL_PIXELFORMAT_INDEX4LSB, tiles__, 4);
+        SDL_Palette* sdl_pal = SDL_CreatePalette(4);
+        SDL_SetPaletteColors(sdl_pal, pal, 0, 4);
+
+        SDL_SetSurfacePalette(surf, sdl_pal);
+
+        vdp_window_tex__ = SDL_CreateTextureFromSurface(renderer__, surf);
+
+        if (!vdp_window_tex__) {
+            LOG_ERROR("%s", SDL_GetError())
+        }
+
+        SDL_DestroySurface(surf);
+        SDL_DestroyPalette(sdl_pal);
+
+        is_vdp_window_changed__ = 0;
+    }
+
     //    vpu__debug_draw_palette__(palette__, 8, 8);
 
         draw_plane__(&planes__[VDP_PLANE__BACKGROUND], 64, 100, 2);
         draw_plane__(&planes__[VDP_PLANE__FOREGROUND], 64, 100, 2);
 
-    //    draw_plane__(&planes__[VDP_PLANE__BACKGROUND], 800, 100, 1);
-    //    draw_plane__(&planes__[VDP_PLANE__FOREGROUND], 800, 100+224, 1);
+    if (vdp_window_tex__ != NULL) {
+
+        SDL_FRect dst = {0, 0, vdp_window_tex__->w * 3, vdp_window_tex__->h * 3};
+        if (!SDL_RenderTexture(renderer__, vdp_window_tex__, NULL, &dst)) {
+            LOG_ERROR("%s", SDL_GetError())
+        }
+    }
+
+        draw_plane__(&planes__[VDP_PLANE__BACKGROUND], 800, 100, 1);
+        draw_plane__(&planes__[VDP_PLANE__FOREGROUND], 800, 100+224, 1);
 
     //    vpu__debug_draw_tiles__();
 
