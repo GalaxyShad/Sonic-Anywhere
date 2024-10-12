@@ -61,7 +61,7 @@ void vdp__set_ram_address(VdpRamAccessMode access_mode, u16 adr, bool vram_to_vr
 ///////////////////////////
 ///////////////////////////
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 static SDL_Window* window__ = NULL;
 static SDL_Renderer* renderer__ = NULL;
@@ -69,8 +69,6 @@ static SDL_Renderer* renderer__ = NULL;
 typedef struct Plane {
     u8* data;
     size data_size;
-    size cell_width;
-    size cell_height;
 } Plane;
 
 
@@ -88,8 +86,6 @@ void vdp__set_address_for_plane(VdpPlane plane_id, MutableByteArray* mem) {
 
     p->data = mem->arr;
     p->data_size = mem->size;
-    p->cell_width = 1;
-    p->cell_height = 1;
 }
 
 void vdp__set_window(const u8* window, size window_size) {
@@ -109,9 +105,9 @@ static u32 mdcolor_to_sdl__(u16 mdcolor) {
 static SDL_Surface* make_tile__(int tile_index, int pal_index) {
     u8* tile = tiles__ + tile_index * 32;
 
-    SDL_Surface* temp_surf = SDL_CreateRGBSurface(0, 8, 8, 32, 0, 0, 0, 0xFF000000);
-    SDL_FillRect(temp_surf, NULL, 0);
-    SDL_SetColorKey(temp_surf, 1, 0);
+    SDL_Surface* temp_surf = SDL_CreateSurface(8, 8, SDL_PIXELFORMAT_ARGB8888);
+    SDL_FillSurfaceRect(temp_surf, NULL, 0);
+    SDL_SetSurfaceColorKey(temp_surf, 1, 0);
 
     for (int i = 0; i < 32; i++) {
         u8 px = tile[i];
@@ -157,15 +153,16 @@ static void draw_plane__(Plane* plane, int x, int y, int scale) {
 
         i32 pos = i;
 
-        SDL_Rect r_src = {0, 0, 8, 8};
+        SDL_FRect r_src = {0, 0, 8, 8};
 
-        SDL_Rect r_dst = {
+        SDL_FRect r_dst = {
           (pos % plane_width) * 8 * scale + x, (pos / plane_width) * 8 * scale + y, 8 * scale, 8 * scale
         };
 
         SDL_Surface* tile = make_tile__(tile_index, pal_id);
 
         SDL_Texture* tex = SDL_CreateTextureFromSurface(renderer__, tile);
+        SDL_SetTextureScaleMode(tex, SDL_SCALEMODE_NEAREST);
 
         int sdl_flip = 0;
 
@@ -174,27 +171,28 @@ static void draw_plane__(Plane* plane, int x, int y, int scale) {
         if (hor_flip)
             sdl_flip |= SDL_FLIP_HORIZONTAL;
 
-        SDL_RenderCopyEx(renderer__, tex, &r_src, &r_dst, 0, NULL, sdl_flip);
+        SDL_RenderTextureRotated(renderer__, tex, &r_src, &r_dst, 0, NULL, sdl_flip);
 
         SDL_DestroyTexture(tex);
-        SDL_FreeSurface(tile);
+
+        SDL_DestroySurface(tile);
     }
 }
 
 void vdp__init() {
-    if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
+    if (!SDL_Init(SDL_INIT_VIDEO)) {
         LOG_ERROR("could not initialize sdl2: %s\n", SDL_GetError())
         return;
     }
 
     window__ =
-      SDL_CreateWindow("hello_sdl2", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 720, SDL_WINDOW_SHOWN);
+      SDL_CreateWindow("hello_sdl2", 1280, 720, 0);
     if (window__ == NULL) {
         LOG_ERROR("could not create window: %s\n", SDL_GetError())
         return;
     }
 
-    renderer__ = SDL_CreateRenderer(window__, -1, SDL_RENDERER_ACCELERATED);
+    renderer__ = SDL_CreateRenderer(window__, NULL);
 
     SDL_PumpEvents();
 }
@@ -238,12 +236,17 @@ static void vpu__debug_draw_tiles__() {
 
         const int in_row = 40;
 
-        SDL_Rect rsrc = {0, 0, 8, 8};
-        SDL_Rect rdst = {(i % in_row) * 9 * 3 + 32, (i / in_row) * 9 * 3 + 600, 8 * 3, 8 * 3};
+        SDL_FRect rsrc = {0, 0, 8, 8};
 
-        SDL_RenderCopy(renderer__, tex, &rsrc, &rdst);
+        int dst_x = (i % in_row) * 9 * 3 + 32;
+        int dst_y = (i / in_row) * 9 * 3 + 600;
+        SDL_FRect rdst = {dst_x, dst_y, 8 * 3, 8 * 3};
 
-        SDL_FreeSurface(tile);
+        SDL_SetTextureScaleMode(tex, SDL_SCALEMODE_NEAREST);
+
+        SDL_RenderTexture(renderer__, tex, &rsrc, &rdst);
+
+        SDL_DestroySurface(tile);
         SDL_DestroyTexture(tex);
     }
 }

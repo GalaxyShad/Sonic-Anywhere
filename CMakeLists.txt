@@ -5,7 +5,7 @@ project(sonic_anywhere C)
 
 set(CMAKE_C_STANDARD 99)
 
-add_subdirectory("src_backend_desktop/lib/SDL2" EXCLUDE_FROM_ALL)
+add_subdirectory("src_backend_desktop/lib/SDL3" EXCLUDE_FROM_ALL)
 
 add_executable(sonic_anywhere
         src/bytearray.h
@@ -33,22 +33,22 @@ add_executable(sonic_anywhere
         config/config.h
 )
 
-target_include_directories(sonic_anywhere PRIVATE ${SDL2_INCLUDE_DIRS})
+target_include_directories(sonic_anywhere PRIVATE ${SDL3_INCLUDE_DIRS})
 target_include_directories(sonic_anywhere PRIVATE ".")
 
-if(TARGET SDL2::SDL2main)
-    target_link_libraries(sonic_anywhere PRIVATE SDL2::SDL2main)
+if(TARGET SDL3::SDL3main)
+    target_link_libraries(sonic_anywhere PRIVATE SDL3::SDL3main)
 endif()
 
 if (WIN32)
     add_custom_command(
             TARGET sonic_anywhere POST_BUILD
-            COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:SDL2::SDL2>" "$<TARGET_FILE_DIR:sonic_anywhere>"
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:SDL3::SDL3>" "$<TARGET_FILE_DIR:sonic_anywhere>"
             VERBATIM
     )
 endif()
 
-target_link_libraries(sonic_anywhere PRIVATE SDL2::SDL2)
+target_link_libraries(sonic_anywhere PRIVATE SDL3::SDL3)
 
 add_executable(sonic_anywhere_tests
         tests/main.c
