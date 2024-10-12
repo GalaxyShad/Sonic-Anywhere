@@ -13,7 +13,7 @@ void game__load_game_mode(GameMode gm) {
 }
 
 void game__init() {
-    vdp__init();
+//    vdp__init();
 
     vdp__set_address_for_plane(VDP_PLANE__BACKGROUND, mem__vram_background());
     vdp__set_address_for_plane(VDP_PLANE__FOREGROUND, mem__vram_foreground());

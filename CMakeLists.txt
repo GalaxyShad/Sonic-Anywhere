@@ -31,6 +31,8 @@ add_executable(sonic_anywhere
         include_backend/system.h
         src_backend_desktop/system.c
         config/config.h
+        src_backend_desktop/text_renderer.c
+        src_backend_desktop/text_renderer.h
 )
 
 target_include_directories(sonic_anywhere PRIVATE ${SDL3_INCLUDE_DIRS})

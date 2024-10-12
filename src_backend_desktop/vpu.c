@@ -62,6 +62,8 @@ void vdp__set_ram_address(VdpRamAccessMode access_mode, u16 adr, bool vram_to_vr
 ///////////////////////////
 
 #include <SDL3/SDL.h>
+#include <string.h>
+#include "text_renderer.h"
 
 static SDL_Window* window__ = NULL;
 static SDL_Renderer* renderer__ = NULL;
@@ -179,23 +181,7 @@ static void draw_plane__(Plane* plane, int x, int y, int scale) {
     }
 }
 
-void vdp__init() {
-    if (!SDL_Init(SDL_INIT_VIDEO)) {
-        LOG_ERROR("could not initialize sdl2: %s\n", SDL_GetError())
-        return;
-    }
 
-    window__ =
-      SDL_CreateWindow("hello_sdl2", 1280, 720, 0);
-    if (window__ == NULL) {
-        LOG_ERROR("could not create window: %s\n", SDL_GetError())
-        return;
-    }
-
-    renderer__ = SDL_CreateRenderer(window__, NULL);
-
-    SDL_PumpEvents();
-}
 
 static void sdl_set_draw_color_default__() {
     SDL_SetRenderDrawColor(renderer__, 0, 0, 0, 0xFF);
@@ -260,24 +246,7 @@ static void vdp__screen_clear__() {
     sdl_set_draw_color_default__();
 }
 
-// Render without interrupts
-void vdp__render() {
-    vdp__screen_clear__();
 
-//    vpu__debug_draw_palette__(palette__, 8, 8);
-
-    draw_plane__(&planes__[VDP_PLANE__BACKGROUND], 64, 100, 2);
-    draw_plane__(&planes__[VDP_PLANE__FOREGROUND], 64, 100, 2);
-
-//    draw_plane__(&planes__[VDP_PLANE__BACKGROUND], 800, 100, 1);
-//    draw_plane__(&planes__[VDP_PLANE__FOREGROUND], 800, 100+224, 1);
-
-//    vpu__debug_draw_tiles__();
-
-    SDL_RenderPresent(renderer__);
-
-    game_vdp__on_vblank_interrupt();
-}
 
 
 void vdp__copy_tilemap_to_layer_r(
@@ -296,3 +265,56 @@ void vdp__copy_tilemap_to_layer_r(
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+void vdp__init() {
+    if (!SDL_Init(SDL_INIT_VIDEO)) {
+        LOG_ERROR("could not initialize sdl2: %s\n", SDL_GetError())
+        return;
+    }
+
+    window__ =
+      SDL_CreateWindow("hello_sdl2", 1280, 720, 0);
+    if (window__ == NULL) {
+        LOG_ERROR("could not create window: %s\n", SDL_GetError())
+        return;
+    }
+
+    renderer__ = SDL_CreateRenderer(window__, NULL);
+
+    SDL_PumpEvents();
+}
+
+// Render without interrupts
+void vdp__render() {
+    u64 frame_start_ticks = SDL_GetTicks();
+
+    vdp__screen_clear__();
+
+    //    vpu__debug_draw_palette__(palette__, 8, 8);
+
+        draw_plane__(&planes__[VDP_PLANE__BACKGROUND], 64, 100, 2);
+        draw_plane__(&planes__[VDP_PLANE__FOREGROUND], 64, 100, 2);
+
+    //    draw_plane__(&planes__[VDP_PLANE__BACKGROUND], 800, 100, 1);
+    //    draw_plane__(&planes__[VDP_PLANE__FOREGROUND], 800, 100+224, 1);
+
+    //    vpu__debug_draw_tiles__();
+
+    u64 frame_duration = SDL_GetTicks() - frame_start_ticks;
+
+    double fps = 0;
+    if (frame_duration != 0) {
+        fps = 1000.0 / (double) frame_duration;
+    }
+
+    char fps_text[20];
+    snprintf(fps_text, 20, "fps: %lf", fps);
+
+    sdl_utils__render_text(renderer__, fps_text, 16, 16, 4);
+
+    SDL_RenderPresent(renderer__);
+
+    game_vdp__on_vblank_interrupt();
+}
