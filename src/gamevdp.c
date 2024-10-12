@@ -2,11 +2,15 @@
 
 #include "include_backend/debug.h"
 #include "include_backend/system.h"
-#include "include_backend/vpu.h"
+#include "include_backend/vdp.h"
 
 #include "gamemode/game.h"
 #include "resources/resourcestore.h"
 
+#include "config/config.h"
+
+static MDColor palette__[16 * 4];
+static MDColor palette_water__[16 * 4];
 
 void game_vdp__load_palette(GameVdpPaletteID pal_id) {
     ResourceID res_id;
@@ -77,23 +81,31 @@ void game_vdp__load_palette(GameVdpPaletteID pal_id) {
 
     ReadonlyByteArray res = resource_store__get(res_id);
 
-    vdp_palette__load(&res);
+    for (int i = 0; i < res.size / 2; i++) {
+        MDColor color = res.arr[i * 2];
+        color = (color << 8) | res.arr[i * 2 + 1];
+        palette__[i] = color;
+    }
 }
 
 static GameVdpPaletteWaterState water_state__;
-static MDColor palette__[16 * 4];
-static MDColor palette_water__[16 * 4];
+
 
 void game_vdp__set_palette_water_state(GameVdpPaletteWaterState water_state) {
     water_state__ = water_state;
 }
 
 void game_vdp__palette_foreach(GameVdpPaletteLayerID pal_id, MDColor (*func)(MDColor)) {
-    RAISE_NOT_IMPLEMENTED
+    MDColor* pal = (pal_id == GAME_VDP_PALETTE_LAYER__MAIN) ? palette__ : palette_water__;
+
+    for (int i = 0; i < 16 * 4; i++) {
+        pal[i] = func(pal[i]);
+    }
 }
 
 void game_vdp__palette_set_color(u8 index, MDColor color) {
-    RAISE_NOT_IMPLEMENTED
+    ASSERT(index >= 0 && index < 16 * 4)
+    palette__[index] = color;
 }
 
 
@@ -134,13 +146,9 @@ static void vblank_wait_pal__() {
 }
 
 static void vblank_update_palette__() {
-    ReadonlyByteArray palette;
-
-    palette.arr =
-      (water_state__ == GAME_VDP_PALETTE_WATER_STATE__ALL_UNDERWATER) ? (u8*) palette_water__ : (u8*) palette__;
-    palette.size = 16 * 4 * sizeof(MDColor);
-
-    vdp_palette__load(&palette);
+    vdp_palette__load_u16(
+      (water_state__ == GAME_VDP_PALETTE_WATER_STATE__ALL_UNDERWATER) ? palette_water__ : palette__
+    );
 }
 
 // sub_106E
@@ -201,6 +209,17 @@ void game_vdp__on_vblank_interrupt() {
     vblank_count++;
 }
 
+void game_vdp__wait_for_vblank() {
+    // TODO enable_ints
+#if CONFIG_VDP_HAS_INTERRUPTS
+    while (vblank_routine__ != 0) {
+        ;
+    }
+#else
+    vdp__render();
+#endif
+}
+
 // VBla_00:
 static void vblank_00__() {
     i8 id_level = 0;
@@ -235,7 +254,8 @@ static void vblank_00__() {
 static u16 demo_length = 0;
 
 static void vblank_process_demo_timer__() {
-    if (demo_length == 0) return;
+    if (demo_length == 0)
+        return;
 
     demo_length--;
 }

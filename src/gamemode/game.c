@@ -2,8 +2,8 @@
 
 #include "include_backend/debug.h"
 
-#include "include_backend/vpu.h"
 #include "include_backend/mem.h"
+#include "include_backend/vdp.h"
 
 static GameMode game_mode__;
 

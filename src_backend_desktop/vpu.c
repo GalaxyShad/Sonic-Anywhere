@@ -1,6 +1,8 @@
-#include "include_backend/vpu.h"
+#include "include_backend/vdp.h"
 
 #include "include_backend/debug.h"
+
+#include "src/gamevdp.h"
 
 static MDColor palette__[4 * 16];
 static u8 palette_bg_index__ = 0;
@@ -9,11 +11,21 @@ static u8 tile_mapping_mem__[256 * 256];
 
 ////////////////////////////////////////////////////////
 
-void vdp_palette__load(const ReadonlyByteArray* palette){
+void vdp_palette__load(const ReadonlyByteArray* palette) {
     LOG("called [%s] pal_id = %d", __func__)
+
+//    for (int i = 0; i < palette->size / 2; i++) {
+//        palette__[i] = ((MDColor*)palette)[i];
+//    }
 
     for (int i = 0; i < palette->size / 2; i++) {
         palette__[i] = (palette->arr[i * 2] << 8) | palette->arr[i * 2 + 1];
+    }
+}
+
+void vdp_palette__load_u16(const u16* pal) {
+    for (int i = 0; i < 16 * 4; i++) {
+        palette__[i] = pal[i];
     }
 }
 
@@ -40,10 +52,6 @@ void vdp__set_scrolling_mode(VdpVScrollMode vertical_mode, VdpHScrollMode horizo
   : (horizontal_mode == VDP_HSCROLL_MODE__EACH_1_CELL) ? "VDP_HSCROLL_MODE__EACH_1_CELL"
                                                        : "VDP_HSCROLL_MODE__EACH_1_LINE"
 ) RAISE_NOT_IMPLEMENTED}
-
-u8* vpu__get_mutable_memory_256x256_tile_mappings() {
-    return tile_mapping_mem__;
-}
 
 void vdp__set_ram_address(VdpRamAccessMode access_mode, u16 adr, bool vram_to_vram_copy, bool dma) {
     RAISE_NOT_IMPLEMENTED
@@ -102,11 +110,7 @@ static SDL_Surface* make_tile__(int tile_index, int pal_index) {
     u8* tile = tiles__ + tile_index * 32;
 
     SDL_Surface* temp_surf = SDL_CreateRGBSurface(0, 8, 8, 32, 0, 0, 0, 0xFF000000);
-
-    u32 transparent = mdcolor_to_sdl__(palette__[0]);
-
     SDL_FillRect(temp_surf, NULL, 0);
-
     SDL_SetColorKey(temp_surf, 1, 0);
 
     for (int i = 0; i < 32; i++) {
@@ -115,8 +119,8 @@ static SDL_Surface* make_tile__(int tile_index, int pal_index) {
         u8 a = (px & 0xF0) >> 4;
         u8 b = (px & 0x0F) >> 0;
 
-        u32 color_a = (a != 0) ? (0xFF000000 | mdcolor_to_sdl__(palette__[pal_index * 16 + a - 1])) : 0;
-        u32 color_b = (b != 0) ? (0xFF000000 | mdcolor_to_sdl__(palette__[pal_index * 16 + b - 1])) : 0;
+        u32 color_a = (a != 0) ? (0xFF000000 | mdcolor_to_sdl__(palette__[pal_index * 16 + a])) : 0;
+        u32 color_b = (b != 0) ? (0xFF000000 | mdcolor_to_sdl__(palette__[pal_index * 16 + b])) : 0;
 
         u8 x = (i % 4) * 2;
         u8 y = i / 4;
@@ -130,9 +134,7 @@ static SDL_Surface* make_tile__(int tile_index, int pal_index) {
     return temp_surf;
 }
 
-static void draw_plane__(Plane* plane, int x, int y) {
-
-//    int plane_width = plane->cell_width;
+static void draw_plane__(Plane* plane, int x, int y, int scale) {
     int plane_width = cells_hor_count__;
     int plane_height = 28;
 
@@ -145,10 +147,10 @@ static void draw_plane__(Plane* plane, int x, int y) {
 
         u16 word = (a << 8) | b;
 
-        //        PCCV HAAA AAAA AAAA
+        // PCCV HAAA AAAA AAAA
 
-        u16 p = (word >> 15) & 1;
-        u16 pal_id = (word >> 9) & 0b11;
+        u16 p = (word >> 15) & 1; //  TODO
+        u16 pal_id = (word >> 13) & 0b11;
         u16 vert_flip = (word >> 12) & 1;
         u16 hor_flip = (word >> 11) & 1;
         u16 tile_index = word & 0b0000011111111111;
@@ -156,8 +158,6 @@ static void draw_plane__(Plane* plane, int x, int y) {
         i32 pos = i;
 
         SDL_Rect r_src = {0, 0, 8, 8};
-
-        int scale = 1;
 
         SDL_Rect r_dst = {
           (pos % plane_width) * 8 * scale + x, (pos / plane_width) * 8 * scale + y, 8 * scale, 8 * scale
@@ -199,19 +199,33 @@ void vdp__init() {
     SDL_PumpEvents();
 }
 
-static void vpu__debug_draw_palette__() {
+static void sdl_set_draw_color_default__() {
+    SDL_SetRenderDrawColor(renderer__, 0, 0, 0, 0xFF);
+}
+
+static void sdl_set_draw_color_u32__(u32 color) {
+    u8 alpha = 0xFF & (color >> 24);
+
+    u8 r = 0xFF & (color >> 16);
+    u8 g = 0xFF & (color >> 8);
+    u8 b = 0xFF & (color >> 0);
+
+    SDL_SetRenderDrawColor(renderer__, r, g, b, alpha);
+}
+
+
+static void vpu__debug_draw_palette__(MDColor* pal, int x, int y) {
+    int scale = 4;
+
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 16; j++) {
-            SDL_Rect rect = {.x = j * 5, .y = i * 5, .w = 4, .h = 4};
+            SDL_Rect rect = {.x = j * 5 * scale + x, .y = i * 5 * scale + y, .w = 4 * scale, .h = 4 * scale};
 
-            u32 col = mdcolor_to_sdl__(palette__[i * 16 + j]);
-            u8 r = (col & 0xFF0000) >> 16;
-            u8 g = (col & 0x00FF00) >> 8;
-            u8 b = (col & 0x0000FF) >> 0;
+            u32 col = mdcolor_to_sdl__(pal[i * 16 + j]);
 
-            SDL_SetRenderDrawColor(renderer__, r, g, b, 0xFF);
+            sdl_set_draw_color_u32__(col);
             SDL_RenderFillRect(renderer__, &rect);
-            SDL_SetRenderDrawColor(renderer__, 0x00, 0xAA, 0xAA, 0x00);
+            sdl_set_draw_color_default__();
         }
     }
 }
@@ -234,71 +248,48 @@ static void vpu__debug_draw_tiles__() {
     }
 }
 
-static void sdl_set_draw_color_default() {
-    SDL_SetRenderDrawColor(renderer__, 0, 0, 0, 0xFF);
-}
-
-static void sdl_set_draw_color_u32__(u32 color) {
-    u8 alpha = 0xFF & (color >> 24);
-
-    u8 r = 0xFF & (color >> 16);
-    u8 g = 0xFF & (color >> 8);
-    u8 b = 0xFF & (color >> 0);
-
-    SDL_SetRenderDrawColor(renderer__, r, g, b, alpha);
-}
 
 static void vdp__screen_clear__() {
     u32 transparent = mdcolor_to_sdl__(palette__[palette_bg_index__]);
 
-//    sdl_set_draw_color_u32__(transparent);
+    sdl_set_draw_color_u32__(0xFF00AAAA);
     SDL_RenderClear(renderer__);
-    sdl_set_draw_color_default();
+    sdl_set_draw_color_default__();
 }
 
-void vdp__sleep_until_vblank() {
+// Render without interrupts
+void vdp__render() {
     vdp__screen_clear__();
 
-    vpu__debug_draw_palette__();
+//    vpu__debug_draw_palette__(palette__, 8, 8);
 
-    draw_plane__(&planes__[VDP_PLANE__BACKGROUND], 0, 100);
-    draw_plane__(&planes__[VDP_PLANE__FOREGROUND], 0, 100);
+    draw_plane__(&planes__[VDP_PLANE__BACKGROUND], 64, 100, 2);
+    draw_plane__(&planes__[VDP_PLANE__FOREGROUND], 64, 100, 2);
 
-    draw_plane__(&planes__[VDP_PLANE__BACKGROUND], 400, 100);
-    draw_plane__(&planes__[VDP_PLANE__FOREGROUND], 800, 100);
+//    draw_plane__(&planes__[VDP_PLANE__BACKGROUND], 800, 100, 1);
+//    draw_plane__(&planes__[VDP_PLANE__FOREGROUND], 800, 100+224, 1);
 
-    vpu__debug_draw_tiles__();
+//    vpu__debug_draw_tiles__();
 
     SDL_RenderPresent(renderer__);
 
-//    SDL_Delay(100);
+    game_vdp__on_vblank_interrupt();
 }
 
 
 void vdp__copy_tilemap_to_layer_r(
-  VdpPlane plane_id, i32 shift, const ReadonlyByteArray* tilemap, size cells_width, size cells_height
+  VdpPlane plane_id, u8 shift_x, u8 shift_y, const ReadonlyByteArray* tilemap, size cells_width, size cells_height
 ) {
-    LOG(
-      "called [%s] VDP Plane [%s] shift = %d, cells_width = %d, cells_height = %d", __func__,
-      (plane_id == VDP_PLANE__BACKGROUND) ? "BG" : "FG", shift, cells_width, cells_height
-    )
-
     Plane* p = planes__ + plane_id;
 
     u16* src = (u16*)tilemap->arr;
     u16* dst = (u16*)p->data;
 
-    shift *= 2;
+    for (int i = 0; i < cells_height * cells_width; i++) {
+        int x = i % cells_width;
+        int y = i / cells_width;
 
-    u16 a = (shift >> 8) & 0xFF;
-    u16 b = shift & 0xFF;
-
-    for (int i = 0; i < cells_height; i++) {
-        for (int j = 0; j < cells_width; j++) {
-            dst[(i + a) * cells_hor_count__ + j + b] = src[i * cells_width + j];
-        }
+        dst[(y + shift_y) * cells_hor_count__ + x + shift_x] = src[y * cells_width + x];
     }
-
-    p->cell_width = cells_width;
-    p->cell_height = cells_height;
 }
+

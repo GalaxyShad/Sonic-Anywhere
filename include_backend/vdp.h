@@ -1,5 +1,5 @@
-#ifndef SONIC_ANYWHERE_VPU_H
-#define SONIC_ANYWHERE_VPU_H
+#ifndef SONIC_ANYWHERE_VDP_H
+#define SONIC_ANYWHERE_VDP_H
 
 #include "../src/bytearray.h"
 #include "mdcolor.h"
@@ -7,8 +7,9 @@
 void vdp__init();
 
 void vdp_palette__load(const ReadonlyByteArray* palette);
+void vdp_palette__load_u16(const u16* pal); // FIXME temp solution for MSB and LSB byte orders
 
-void vdp__sleep_until_vblank();
+void vdp__render();
 
 typedef enum VdpColorMode { VDP_COLOR_MODE_8_COLOR } VdpColorMode;
 
@@ -34,7 +35,7 @@ typedef enum VdpPlane { VDP_PLANE__BACKGROUND, VDP_PLANE__FOREGROUND } VdpPlane;
 
 void vdp__set_address_for_plane(VdpPlane plane_id, MutableByteArray* mem);
 void vdp__copy_tilemap_to_layer_r(
-  VdpPlane plane_id, i32 shift, const ReadonlyByteArray* tilemap, size cells_width, size cells_height
+  VdpPlane plane_id, u8 shift_x, u8 shift_y, const ReadonlyByteArray* tilemap, size cells_width, size cells_height
 );
 
 typedef enum VdpRamAccessMode {
@@ -50,4 +51,4 @@ typedef enum VdpRamAccessMode {
 void vdp__set_ram_address(VdpRamAccessMode access_mode, u16 adr, bool vram_to_vram_copy, bool dma);
 
 
-#endif // SONIC_ANYWHERE_VPU_H
+#endif // SONIC_ANYWHERE_VDP_H
