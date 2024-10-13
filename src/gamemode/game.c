@@ -2,8 +2,8 @@
 
 #include "include_backend/debug.h"
 
-#include "include_backend/vpu.h"
 #include "include_backend/mem.h"
+#include "include_backend/vdp.h"
 
 static GameMode game_mode__;
 
@@ -13,7 +13,7 @@ void game__load_game_mode(GameMode gm) {
 }
 
 void game__init() {
-    vdp__init();
+//    vdp__init();
 
     vdp__set_address_for_plane(VDP_PLANE__BACKGROUND, mem__vram_background());
     vdp__set_address_for_plane(VDP_PLANE__FOREGROUND, mem__vram_foreground());
@@ -33,4 +33,8 @@ void game__init() {
         else
             return;
     }
+}
+
+GameMode game__get_game_mode() {
+    return game_mode__;
 }

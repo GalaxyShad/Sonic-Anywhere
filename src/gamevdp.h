@@ -51,4 +51,8 @@ void game_vdp__palette_set_color(u8 index, MDColor color);
 // same as -> move.b $14,(v_vbla_routine).w
 void game_vdp__set_vblank_routine_counter(u8 routine);
 
+void game_vdp__wait_for_vblank();
+
+void game_vdp__on_vblank_interrupt();
+
 #endif // SONIC_ANYWHERE_GAMEVDP_H

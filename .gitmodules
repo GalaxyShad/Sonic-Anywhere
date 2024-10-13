@@ -1,7 +1,6 @@
-[submodule "src_backend_desktop/lib/SDL2"]
-	path = src_backend_desktop/lib/SDL2
-	url = https://github.com/libsdl-org/SDL.git
-	branch = release-2.30.x
 [submodule "s1disasm"]
 	path = s1disasm
 	url = https://github.com/sonicretro/s1disasm.git
+[submodule "src_backend_desktop/lib/raylib5"]
+	path = src_backend_desktop/lib/raylib5
+	url = https://github.com/raysan5/raylib.git
