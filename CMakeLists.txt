@@ -5,7 +5,7 @@ project(sonic_anywhere C)
 
 set(CMAKE_C_STANDARD 99)
 
-add_subdirectory("src_backend_desktop/lib/SDL3" EXCLUDE_FROM_ALL)
+add_subdirectory("src_backend_desktop/lib/raylib5" EXCLUDE_FROM_ALL)
 
 add_executable(sonic_anywhere
         src/bytearray.h
@@ -31,26 +31,13 @@ add_executable(sonic_anywhere
         include_backend/system.h
         src_backend_desktop/system.c
         config/config.h
-        src_backend_desktop/text_renderer.c
-        src_backend_desktop/text_renderer.h
 )
 
-target_include_directories(sonic_anywhere PRIVATE ${SDL3_INCLUDE_DIRS})
+target_include_directories(sonic_anywhere PRIVATE ${raylib_public_headers})
 target_include_directories(sonic_anywhere PRIVATE ".")
 
-if(TARGET SDL3::SDL3main)
-    target_link_libraries(sonic_anywhere PRIVATE SDL3::SDL3main)
-endif()
 
-if (WIN32)
-    add_custom_command(
-            TARGET sonic_anywhere POST_BUILD
-            COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:SDL3::SDL3>" "$<TARGET_FILE_DIR:sonic_anywhere>"
-            VERBATIM
-    )
-endif()
-
-target_link_libraries(sonic_anywhere PRIVATE SDL3::SDL3)
+target_link_libraries(sonic_anywhere PRIVATE raylib)
 
 add_executable(sonic_anywhere_tests
         tests/main.c

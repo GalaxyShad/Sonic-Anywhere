@@ -3,19 +3,22 @@
 
 #include "include_backend/vdp.h"
 
-#include <SDL3/SDL.h>
+#include <pthread.h>
+#include <raylib.h>
 
-static int game_thread__(void *ptr) {
+void* game_thread__(void *ptr) {
    game__init();
    return 0;
 }
 
 
 int main(int argc, char* args[]) {
-    SDL_Thread* game_thread = SDL_CreateThread(game_thread__, "game_thread", (void*)NULL);
+    pthread_t game_thread;
+
+    pthread_create(&game_thread, NULL, game_thread__, (void*)NULL);
 
     vdp__init();
-    while (1) {
+    while (!WindowShouldClose()) {
         vdp__render();
     }
 }

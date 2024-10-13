@@ -1,6 +1,6 @@
 [submodule "s1disasm"]
 	path = s1disasm
 	url = https://github.com/sonicretro/s1disasm.git
-[submodule "src_backend_desktop/lib/SDL3"]
-	path = src_backend_desktop/lib/SDL3
-	url = https://github.com/libsdl-org/SDL/commit/e292d1ODOCf5ace469f718d7b6b4dec8c28e37dcaa0e
+[submodule "src_backend_desktop/lib/raylib5"]
+	path = src_backend_desktop/lib/raylib5
+	url = https://github.com/raysan5/raylib.git
