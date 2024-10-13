@@ -67,6 +67,8 @@ if __name__ == '__main__':
 
     file_list = get_list_files('.', FOLDERS)
 
+    if (os.path.isdir('../src_s1disasm_assets') == False):
+        os.makedirs('../src_s1disasm_assets')
     os.chdir(os.path.join(dir, 'src_s1disasm_assets'))
 
     for file in file_list:

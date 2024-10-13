@@ -1,3 +1,6 @@
 cmake-build-debug/
 .idea/
-./src_s1disasm_assets
+src_s1disasm_assets
+build
+.vscode
+.cache
