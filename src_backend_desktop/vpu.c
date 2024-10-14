@@ -220,7 +220,8 @@ void vdp__init() {
         shader_palette__[i * 3 + 2] = col.b;
     }
 
-    SetTargetFPS(61);
+    SetMasterVolume(0.05f);
+    SetTargetFPS(60);
 }
 
 // Render without interrupts
@@ -250,19 +251,19 @@ void vdp__render() {
         is_vdp_window_changed__ = 0;
     }
 
-    vpu__debug_draw_palette__(palette__, 900, 8);
+//    vpu__debug_draw_palette__(palette__, 900, 8);
 
     BeginShaderMode(palette_shader__);
     {
         draw_plane__(&planes__[VDP_PLANE__BACKGROUND], 140, 100, 2);
         draw_plane__(&planes__[VDP_PLANE__FOREGROUND], 140, 100, 2);
+//
+//        draw_plane__(&planes__[VDP_PLANE__BACKGROUND], 800, 100, 1);
+//        draw_plane__(&planes__[VDP_PLANE__FOREGROUND], 800, 100 + 224, 1);
 
-        draw_plane__(&planes__[VDP_PLANE__BACKGROUND], 800, 100, 1);
-        draw_plane__(&planes__[VDP_PLANE__FOREGROUND], 800, 100 + 224, 1);
-
-        if (vdp_window_tex__.id != 0) {
-            DrawTextureEx(vdp_window_tex__, (Vector2){32, 32}, 0, 3, WHITE);
-        }
+//        if (vdp_window_tex__.id != 0) {
+//            DrawTextureEx(vdp_window_tex__, (Vector2){32, 32}, 0, 3, WHITE);
+//        }
     }
     EndShaderMode();
 
