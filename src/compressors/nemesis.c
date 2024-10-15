@@ -1,5 +1,7 @@
+// The original code was created by Clownacy and adapted to the current codebase by Adol Eleador II.
+// https://github.com/Clownacy/clownnemesis/tree/master
+
 #include "../compressors.h"
-#include "include_backend/debug.h"
 #define NULL 0
 #define MAXIMUM_CODE_BITS 8
 
@@ -8,15 +10,18 @@ typedef struct MemoryStream {
     u64 rw_index;
     u8* buffer;
 } MemoryStream;
+
 typedef struct StateCommon {
     void* read_byte_user_data;
     void* write_byte_user_data;
 } StateCommon;
+
 typedef struct NybbleRun {
     u8 total_code_bits;
     u8 value;
     u8 length;
 } NybbleRun;
+
 typedef struct State {
     StateCommon common;
     NybbleRun nybble_runs[1 << MAXIMUM_CODE_BITS];
@@ -98,8 +103,9 @@ static void OutputNybbles(State* const state, const u32 nybble, const u32 total_
 
         if ((++state->output_buffer_nybbles_done & 7) == 0) {
             u32 j;
-            const u64 final_output = state->output_buffer ^ (state->xor_mode_enabled ? state->previous_output_buffer : 0);
-            for (j = 0; j < 4; ++j){
+            const u64 final_output =
+              state->output_buffer ^ (state->xor_mode_enabled ? state->previous_output_buffer : 0);
+            for (j = 0; j < 4; ++j) {
                 WriteByte(&state->common, (final_output >> (4 - 1 - j) * 8) & 0xFF);
             }
             state->previous_output_buffer = final_output;
@@ -136,7 +142,6 @@ void compressors__nemesis_decompress(const u8* src, size src_size, u8* dst, size
     }
 
 
-
     // CodeTable
     u8 nybble_run_value = 0;
     u8 byte = ReadByte(&state.common);
@@ -151,7 +156,8 @@ void compressors__nemesis_decompress(const u8* src, size src_size, u8* dst, size
             const u32 nybble_run_index = (u32) code << (8u - total_code_bits);
             NybbleRun* const nybble_run = &state.nybble_runs[nybble_run_index];
 
-            if (total_code_bits > 8 || total_code_bits == 0 || nybble_run_index > (sizeof(state.nybble_runs) / sizeof((state.nybble_runs)[0]))) {
+            if (total_code_bits > 8 || total_code_bits == 0 ||
+                nybble_run_index > (sizeof(state.nybble_runs) / sizeof((state.nybble_runs)[0]))) {
                 // Error
             }
 
@@ -162,7 +168,6 @@ void compressors__nemesis_decompress(const u8* src, size src_size, u8* dst, size
             byte = ReadByte(&state.common);
         }
     }
-
 
 
     // Codes
