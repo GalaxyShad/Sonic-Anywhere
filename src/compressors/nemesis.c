@@ -2,8 +2,19 @@
 // https://github.com/Clownacy/clownnemesis/tree/master
 
 #include "../compressors.h"
+#include "include_backend/debug.h"
 #define NULL 0
 #define MAXIMUM_CODE_BITS 8
+
+static u8 check_out_of_range(const char* name_arr_1, u64 index_arr_1, const char* name_arr_2, u64 index_arr_2) {
+    if (index_arr_1 > index_arr_2) {
+        LOG_ERROR(
+          "%s(%lld) out of range of %s %s_size(%lld).", name_arr_1, index_arr_1, name_arr_2, name_arr_2, index_arr_2
+        );
+        return 1;
+    }
+    return 0;
+}
 
 typedef struct MemoryStream {
     u64 size;
@@ -35,18 +46,17 @@ typedef struct State {
 
 u32 ReadByte(StateCommon* const stateCommon) {
     MemoryStream* const stream = (MemoryStream*) stateCommon->read_byte_user_data;
-    if (stream->rw_index >= stream->size) {
-        // ERROR
-    }
+    if (check_out_of_range("read_byte_user_data", stream->rw_index, "buffer", stream->size))
+        return -1;
     const u32 value = stream->buffer[stream->rw_index++];
 
     return value;
 }
 static u32 WriteByte(StateCommon* const stateCommon, const u8 byte) {
     MemoryStream* const stream = (MemoryStream*) stateCommon->write_byte_user_data;
-    if (stream->rw_index > stream->size) {
-        // ERROR
-    }
+    if (check_out_of_range("write_byte_user_data", stream->rw_index, "buffer", stream->size))
+        return -1;
+
     stream->buffer[stream->rw_index++] = byte;
     return byte;
 }
@@ -78,7 +88,8 @@ static const NybbleRun* FindCode(State* const state) {
     u32 code = 0, total_code_bits = 0;
     while (1) {
         if (total_code_bits == MAXIMUM_CODE_BITS) {
-            // Error
+            LOG_ERROR("Exceeded total_code_bits(%d) max value %d", total_code_bits, MAXIMUM_CODE_BITS);
+            return NULL;
         }
 
         code <<= 1;
@@ -158,7 +169,10 @@ void compressors__nemesis_decompress(const u8* src, size src_size, u8* dst, size
 
             if (total_code_bits > 8 || total_code_bits == 0 ||
                 nybble_run_index > (sizeof(state.nybble_runs) / sizeof((state.nybble_runs)[0]))) {
-                // Error
+                LOG_ERROR(
+                  "total_code_bits(%d) out of range [1 8] or nybble_run_index(%d) out of range size nybble_runs(%d)",
+                  total_code_bits, nybble_run_index, (sizeof(state.nybble_runs) / sizeof((state.nybble_runs)[0]))
+                )
             }
 
             nybble_run->total_code_bits = total_code_bits;
@@ -182,7 +196,7 @@ void compressors__nemesis_decompress(const u8* src, size src_size, u8* dst, size
         if (nybble_run != NULL)
             ++total_runs;
         if (run_length > nybbles_remaining) {
-            // Error
+            LOG_ERROR("run_length(%d) is written to nybbles_remaining(%lld)", run_length, nybbles_remaining);
         }
 
         OutputNybbles(&state, nybble, run_length);
