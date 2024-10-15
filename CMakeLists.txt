@@ -22,7 +22,7 @@ add_executable(sonic_anywhere
         src_backend_desktop/debug.c
         src_backend_desktop/input.c
         src_backend_desktop/plc.c
-        src_backend_desktop/vpu.c
+        src_backend_desktop/vdp.c
         src_backend_desktop/mdcolor.c
         src/gamevdp.h
         src/gamevdp.c

@@ -12,10 +12,6 @@ static u8 palette_bg_index__ = 0;
 void vdp_palette__load(const ReadonlyByteArray* palette) {
     LOG("called [%s] pal_id = %d", __func__)
 
-    //    for (int i = 0; i < palette->size / 2; i++) {
-    //        palette__[i] = ((MDColor*)palette)[i];
-    //    }
-
     for (int i = 0; i < palette->size / 2; i++) {
         palette__[i] = (palette->arr[i * 2] << 8) | palette->arr[i * 2 + 1];
     }
@@ -72,22 +68,12 @@ static Plane planes__[2] = {};
 
 static u8 cells_hor_count__ = 40;
 
-void vdp__set_address_for_plane(VdpPlane plane_id, MutableByteArray* mem) {
-    LOG(
-      "called [%s] VDP Plane [%s] addr set to %p", __func__, (plane_id == VDP_PLANE__BACKGROUND) ? "BG" : "FG", mem->arr
-    )
-
-    Plane* p = planes__ + plane_id;
-
-    p->data = mem->arr;
-    p->data_size = mem->size;
-}
 
 static Texture2D vdp_window_tex__;
 static Shader palette_shader__;
 static int is_vdp_window_changed__ = 0;
 
-void vdp__set_window(const u8* window, size window_size) {
+static void vdp__set_window__(const u8* window, size window_size) {
     int w = 32;
 
     for (int i = 0; i < window_size; i++) {
@@ -105,6 +91,22 @@ void vdp__set_window(const u8* window, size window_size) {
     }
 
     is_vdp_window_changed__ = 1;
+}
+
+void vdp__set_name_table_location_for_plane(VdpPlane plane_id, MutableByteArray* mem) {
+    LOG(
+      "called [%s] VDP Plane [%s] addr set to %p", __func__, (plane_id == VDP_PLANE__BACKGROUND) ? "BG" : "FG", mem->arr
+    )
+
+    if (plane_id == VDP_PLANE__WINDOW) {
+        vdp__set_window__(mem->arr, mem->size);
+        return;
+    }
+
+    Plane* p = planes__ + plane_id;
+
+    p->data = mem->arr;
+    p->data_size = mem->size;
 }
 
 static u32 mdcolor_to_rgba24__(u16 mdcolor) {

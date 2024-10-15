@@ -15,8 +15,8 @@ void game__load_game_mode(GameMode gm) {
 void game__init() {
 //    vdp__init();
 
-    vdp__set_address_for_plane(VDP_PLANE__BACKGROUND, mem__vram_background());
-    vdp__set_address_for_plane(VDP_PLANE__FOREGROUND, mem__vram_foreground());
+    vdp__set_name_table_location_for_plane(VDP_PLANE__BACKGROUND, mem__vram_background());
+    vdp__set_name_table_location_for_plane(VDP_PLANE__FOREGROUND, mem__vram_foreground());
 
     // TODO clear_ram();
 

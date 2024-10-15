@@ -5,6 +5,7 @@
 
 const MutableByteArray* mem__vram_foreground();
 const MutableByteArray* mem__vram_background();
+const MutableByteArray* mem__vram_window();
 const MutableByteArray* mem__vram_sprites();
 
 const MutableByteArray* mem__chunks(); // 256x256 tile mappings ($52 chunks)

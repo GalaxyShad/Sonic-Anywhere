@@ -29,11 +29,14 @@ typedef enum VdpHScrollMode {
 
 void vdp__set_scrolling_mode(VdpVScrollMode vertical_mode, VdpHScrollMode horizontal_mode, int enable_interrupt);
 
-void vdp__set_window(const u8* window, size window_size);
+typedef enum VdpPlane { 
+    VDP_PLANE__FOREGROUND,  // (Plane A)
+    VDP_PLANE__BACKGROUND,  // (Plane B)
+    VDP_PLANE__WINDOW
+} VdpPlane;
 
-typedef enum VdpPlane { VDP_PLANE__BACKGROUND, VDP_PLANE__FOREGROUND } VdpPlane;
+void vdp__set_name_table_location_for_plane(VdpPlane plane_id, MutableByteArray* mem);
 
-void vdp__set_address_for_plane(VdpPlane plane_id, MutableByteArray* mem);
 void vdp__copy_tilemap_to_layer_r(
   VdpPlane plane_id, u8 shift_x, u8 shift_y, const ReadonlyByteArray* tilemap, size cells_width, size cells_height
 );

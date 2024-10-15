@@ -6,6 +6,7 @@
 #include "include_backend/plc.h"
 #include "include_backend/tinyint.h"
 #include "include_backend/vdp.h"
+#include "include_backend/system.h"
 
 #include "../compressors.h"
 
@@ -183,8 +184,8 @@ void game_mode_sega() {
     palette_fadeout__();
 
     vdp__set_color_mode(VDP_COLOR_MODE_8_COLOR);
-    vdp__set_address_for_plane(VDP_PLANE__FOREGROUND, mem__vram_foreground());
-    vdp__set_address_for_plane(VDP_PLANE__BACKGROUND, mem__vram_background());
+    vdp__set_name_table_location_for_plane(VDP_PLANE__FOREGROUND, mem__vram_foreground());
+    vdp__set_name_table_location_for_plane(VDP_PLANE__BACKGROUND, mem__vram_background());
     vdp__set_background_color(0, 0);
     vdp__set_scrolling_mode(VDP_VSCROLL_MODE__FULL_SCROLL, VDP_HSCROLL_MODE__FULL_SCROLL, 0);
 
@@ -203,7 +204,12 @@ void game_mode_sega() {
     ReadonlyByteArray sega_logo_patterns_nem =
       resource_store__get(use_japanese_logo ? RESOURCE__ARTNEM__SEGA_LOGO_JP1_NEM : RESOURCE__ARTNEM__SEGA_LOGO_NEM);
 
-    vdp__set_window(sega_logo_patterns_nem.arr, sega_logo_patterns_nem.size);
+    for (int i = 0; i < sega_logo_patterns_nem.size; i++) {
+        mem__vram_window()->arr[i] = sega_logo_patterns_nem.arr[i];
+    }
+
+    vdp__set_name_table_location_for_plane(VDP_PLANE__WINDOW, mem__vram_window());
+
 
 //    compressors__nemesis_decompress(
 //      sega_logo_patterns_nem.arr, sega_logo_patterns_nem.size, vpu__get_mutable_direct_memory(), 5024
@@ -221,7 +227,8 @@ void game_mode_sega() {
     vdp__copy_tilemap_to_layer_r(VDP_PLANE__FOREGROUND, 0, 0, &fg, 40, 28);
 
     // Decided to apply revision 1 fix
-    if (use_japanese_logo) {
+    if (system__is_region_japan()) {
+        // TODO
 //        ReadonlyByteArray white_rect = {buffer + 0xA40, 256 * 256};
 //        vdp__copy_tilemap_to_layer_r(VDP_PLANE__FOREGROUND, 0x53A, &white_rect, 3, 2);
     }
@@ -239,8 +246,6 @@ void game_mode_sega() {
     //      move.w	(v_vdp_buffer1).w,d0
     //		ori.b	#$40,d0
     //		move.w	d0,(vdp_control_port).l
-
-
 
     // Sega_WaitPal:
 
