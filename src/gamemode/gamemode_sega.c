@@ -4,9 +4,8 @@
 #include "include_backend/interrupt.h"
 #include "include_backend/mem.h"
 #include "include_backend/plc.h"
-#include "include_backend/tinyint.h"
-#include "include_backend/vdp.h"
 #include "include_backend/system.h"
+#include "include_backend/vdp.h"
 
 #include "../compressors.h"
 
@@ -58,7 +57,6 @@ static u16 palette_cycle_sega_stripe__() {
         d0 += 2;
     }
 
-
     u16 d2;
 
     // loc_202A:
@@ -91,9 +89,7 @@ static u16 palette_cycle_sega_stripe__() {
 
     // loc_2054:
     if (d0 >= 0x64) {
-        //            v_pcyc_time = 0x401;
-        v_pcyc_time = 8;
-
+        v_pcyc_time = 0x4;
         d0 = -0xC;
     }
 
@@ -113,7 +109,6 @@ static u16 palette_cycle_sega__() {
 
     // loc_206A:
     v_pcyc_time--;
-    LOG("v_pcyc_time %d", v_pcyc_time);
 
     if (v_pcyc_time <= 0) {
         i16 d0 = 0;
@@ -121,7 +116,6 @@ static u16 palette_cycle_sega__() {
         v_pcyc_time = 4;
 
         d0 = v_pcyc_num + 0x0C;
-//        v_pcyc_num += 0x0C;
 
         if (d0 >= 0x30) {
             d0 = 0;
@@ -142,13 +136,13 @@ static u16 palette_cycle_sega__() {
             MDColor color = (pal_sega_2[0] << 8) | pal_sega_2[1];
             game_vdp__palette_set_color(pal_shift / 2, color);
 
-            pal_sega_2+=2;
-            pal_shift+=2;
+            pal_sega_2 += 2;
+            pal_shift += 2;
         }
 
         MDColor color = (pal_sega_2[0] << 8) | pal_sega_2[1];
-        game_vdp__palette_set_color(pal_shift / 2 , color);
-        pal_sega_2+=2;
+        game_vdp__palette_set_color(pal_shift / 2, color);
+        pal_sega_2 += 2;
 
         pal_shift = 0x20;
 
@@ -161,7 +155,6 @@ static u16 palette_cycle_sega__() {
             if (d2 == 0) {
                 d0 += 2;
             }
-
 
             // loc_20B2:
             MDColor color = (pal_sega_2[0] << 8) | pal_sega_2[1];
@@ -199,38 +192,33 @@ void game_mode_sega() {
 
     vdp__clear_screen();
 
-    int use_japanese_logo = 0; // TODO
+    const ResourceID tilemap_sega_logo_id =
+      system__is_region_japan() ? RESOURCE__TILEMAPS__SEGA_LOGO_JP1_ENI : RESOURCE__TILEMAPS__SEGA_LOGO_ENI;
+    const ResourceID patterns_sega_logo_id =
+      system__is_region_japan() ? RESOURCE__ARTNEM__SEGA_LOGO_JP1_NEM : RESOURCE__ARTNEM__SEGA_LOGO_NEM;
 
-    ReadonlyByteArray sega_logo_patterns_nem =
-      resource_store__get(use_japanese_logo ? RESOURCE__ARTNEM__SEGA_LOGO_JP1_NEM : RESOURCE__ARTNEM__SEGA_LOGO_NEM);
-
-    for (int i = 0; i < sega_logo_patterns_nem.size; i++) {
-        mem__vram_window()->arr[i] = sega_logo_patterns_nem.arr[i];
-    }
-
-    vdp__set_name_table_location_for_plane(VDP_PLANE__WINDOW, mem__vram_window());
-
-
-//    compressors__nemesis_decompress(
-//      sega_logo_patterns_nem.arr, sega_logo_patterns_nem.size, vpu__get_mutable_direct_memory(), 5024
-//    );
-
-    ReadonlyByteArray sega_logo_mappings = resource_store__get(
-      use_japanese_logo ? RESOURCE__TILEMAPS__SEGA_LOGO_JP1_ENI : RESOURCE__TILEMAPS__SEGA_LOGO_ENI
+    // ---- Load Sega logo patterns ---- //
+    ReadonlyByteArray sega_logo_patterns_nem = resource_store__get(patterns_sega_logo_id);
+    compressors__nemesis_decompress(
+      sega_logo_patterns_nem.arr, sega_logo_patterns_nem.size, mem__vram_window()->arr, mem__vram_window()->size
     );
 
-    compressors__enigma_decompress(sega_logo_mappings.arr, sega_logo_mappings.size, mem__chunks()->arr, mem__chunks()->size, 0);
+    // ---- Load Sega logo mappings ---- //
+    vdp__set_name_table_location_for_plane(VDP_PLANE__WINDOW, mem__vram_window());
+    ReadonlyByteArray sega_logo_mappings = resource_store__get(tilemap_sega_logo_id);
+    compressors__enigma_decompress(
+      sega_logo_mappings.arr, sega_logo_mappings.size, mem__chunks()->arr, mem__chunks()->size, 0
+    );
 
+    // ---- Copy to display ---- //
+    MutableByteArray foreground = mem__chunks_shifted(24 * 8 * 2);
     vdp__copy_tilemap_to_layer_r(VDP_PLANE__BACKGROUND, 8, 0xA, mem__chunks(), 24, 8);
+    vdp__copy_tilemap_to_layer_r(VDP_PLANE__FOREGROUND, 0, 0, &foreground, 40, 28);
 
-    MutableByteArray fg = mem__chunks_shifted(24 * 8 * 2);
-    vdp__copy_tilemap_to_layer_r(VDP_PLANE__FOREGROUND, 0, 0, &fg, 40, 28);
-
-    // Decided to apply revision 1 fix
+    // Decided to apply REV1 fix
     if (system__is_region_japan()) {
-        // TODO
-//        ReadonlyByteArray white_rect = {buffer + 0xA40, 256 * 256};
-//        vdp__copy_tilemap_to_layer_r(VDP_PLANE__FOREGROUND, 0x53A, &white_rect, 3, 2);
+        MutableByteArray white_rect = mem__chunks_shifted(0xA40);
+        vdp__copy_tilemap_to_layer_r(VDP_PLANE__FOREGROUND, 0x1D, 0xA, &white_rect, 3, 2);
     }
 
     // .loadpal
@@ -275,4 +263,3 @@ void game_mode_sega() {
         }
     }
 }
-
