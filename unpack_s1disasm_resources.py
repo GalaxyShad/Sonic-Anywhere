@@ -67,6 +67,8 @@ if __name__ == '__main__':
 
     file_list = get_list_files('.', FOLDERS)
 
+    if (os.path.isdir('../src_s1disasm_assets') == False):
+        os.makedirs('../src_s1disasm_assets')
     os.chdir(os.path.join(dir, 'src_s1disasm_assets'))
 
     for file in file_list:
@@ -76,8 +78,8 @@ if __name__ == '__main__':
         for path in file_list:
             file_path, file_tail = os.path.split(path)
             file_name_lower = re.sub(r'[ .]', '_', re.sub(r'( -| &|\(|\)|\-)', '', file_tail.lower()))
-            gg = '#include \"' + ((os.path.join(file_path, (file_name_lower + '.h')))[2:]).replace('\\', '/') + '\"'
-            file.write(gg + '\n')
+            include_string = '#include \"' + ((os.path.join(file_path, (file_name_lower + '.h')))[2:]).replace('\\', '/') + '\"'
+            file.write(include_string + '\n')
 
     check_sum = 0
     for file_path in file_list:
@@ -94,6 +96,6 @@ if __name__ == '__main__':
         for path in file_list:
             file_path, file_tail = os.path.split(path)
             file_name_upper = re.sub(r'[ .]', '_', re.sub(r'( -| &|\(|\)|\-)', '', file_tail.upper()))
-            gg = '\tRESOURCE__' + ((os.path.basename(file_path).upper()) + '__' + file_name_upper).replace('\\', '/')
-            file.write(gg + ',\n')
+            resurs_string = '\tRESOURCE__' + ((os.path.basename(file_path).upper()) + '__' + file_name_upper).replace('\\', '/')
+            file.write(resurs_string + ',\n')
         file.write(write_end)

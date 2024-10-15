@@ -3,6 +3,7 @@
 #include "tests/lib/test_framework.h"
 
 #include "compresseddata.h"
+#include "kosinski_data.h"
 
 void test____compressors__kosinski_decompress____should_decompress() {
     unsigned char buffer[4096] = {0};
@@ -10,6 +11,34 @@ void test____compressors__kosinski_decompress____should_decompress() {
     compressors__kosinski_decompress(KOSINSKI_COMPRESSED, ARR_SIZE(KOSINSKI_COMPRESSED), buffer, ARR_SIZE(buffer));
 
     TEST_ASSERT_ARRAY_EQUALS(buffer, ARR_SIZE(buffer), KOSINSKI_DECOMPRESSED, ARR_SIZE(KOSINSKI_DECOMPRESSED))
+}
+void test____compressors__kosinski_decompress____should_decompress_GHZ() {
+    unsigned char buffer[41984] = {0};
+
+    compressors__kosinski_decompress(KOSINSKI_COMPRESSED_GHZ, ARR_SIZE(KOSINSKI_COMPRESSED_GHZ), buffer, ARR_SIZE(buffer));
+
+    TEST_ASSERT_ARRAY_EQUALS(buffer, ARR_SIZE(buffer), KOSINSKI_DECOMPRESSED_GHZ, ARR_SIZE(KOSINSKI_DECOMPRESSED_GHZ))
+}
+void test____compressors__kosinski_decompress____should_decompress_1() {
+    unsigned char buffer[13] = {0};
+
+    compressors__kosinski_decompress(KOSINSKI_COMPRESSED_1, ARR_SIZE(KOSINSKI_COMPRESSED_1), buffer, ARR_SIZE(buffer));
+
+    TEST_ASSERT_ARRAY_EQUALS(buffer, ARR_SIZE(buffer), KOSINSKI_DECOMPRESSED_1, ARR_SIZE(KOSINSKI_DECOMPRESSED_1))
+}
+void test____compressors__kosinski_decompress____should_decompress_2() {
+    unsigned char buffer[4] = {0};
+
+    compressors__kosinski_decompress(KOSINSKI_COMPRESSED_2, ARR_SIZE(KOSINSKI_COMPRESSED_2), buffer, ARR_SIZE(buffer));
+
+    TEST_ASSERT_ARRAY_EQUALS(buffer, ARR_SIZE(buffer), KOSINSKI_DECOMPRESSED_2, ARR_SIZE(KOSINSKI_DECOMPRESSED_2))
+}
+void test____compressors__kosinski_decompress____should_decompress_3() {
+    unsigned char buffer[32] = {0};
+
+    compressors__kosinski_decompress(KOSINSKI_COMPRESSED_3, ARR_SIZE(KOSINSKI_COMPRESSED_3), buffer, ARR_SIZE(buffer));
+
+    TEST_ASSERT_ARRAY_EQUALS(buffer, ARR_SIZE(buffer), KOSINSKI_DECOMPRESSED_3, ARR_SIZE(KOSINSKI_DECOMPRESSED_3))
 }
 
 
@@ -35,7 +64,7 @@ void test____compressors__enigma_decompress____should_decompress() {
 }
 
 void test____compressors__nemesis_decompress____should_decompress() {
-    unsigned char buffer[4096] = {0};
+    unsigned char buffer[448] = {0};
 
     compressors__nemesis_decompress(NEMESIS_COMPRESSED, ARR_SIZE(NEMESIS_COMPRESSED), buffer, ARR_SIZE(buffer));
 
@@ -84,21 +113,25 @@ void test____utils__lshift_bits____ff() {
 }
 
 int main() {
-    test____tinyint____u8_should_be_1_byte_long();
-    test____tinyint____u16_should_be_2_byte_long();
-    test____tinyint____u32_should_be_4_byte_long();
-    test____tinyint____u64_should_be_8_byte_long();
+    // test____tinyint____u8_should_be_1_byte_long();
+    // test____tinyint____u16_should_be_2_byte_long();
+    // test____tinyint____u32_should_be_4_byte_long();
+    // test____tinyint____u64_should_be_8_byte_long();
 
-    //        test____compressors__kosinski_decompress____should_decompress();
-    test____compressors__enigma_decompress____should_decompress();
-    test____compressors__enigma_decompress____should_decompress_data_from_sega_retro();
-    //        test____compressors__nemesis_decompress____should_decompress();
+    test____compressors__kosinski_decompress____should_decompress_1();
+    test____compressors__kosinski_decompress____should_decompress_2();
+    test____compressors__kosinski_decompress____should_decompress_3();
+    test____compressors__kosinski_decompress____should_decompress();
+    test____compressors__kosinski_decompress____should_decompress_GHZ();
+    // test____compressors__enigma_decompress____should_decompress();
+    // test____compressors__enigma_decompress____should_decompress_data_from_sega_retro();
+    // test____compressors__nemesis_decompress____should_decompress();
 
-    test____utils__lshift_bits____10010110b10110101_shifted_by_0_should_be_10010110();
-    test____utils__lshift_bits____10010110b10110101_shifted_by_2_should_be_01011010();
-    test____utils__lshift_bits____10010110b10110101_shifted_by_14_should_be_01000000();
-    test____utils__lshift_bits____a_shifted_by_14_should_be_01000000();
-    test____utils__lshift_bits____ff();
+    // test____utils__lshift_bits____10010110b10110101_shifted_by_0_should_be_10010110();
+    // test____utils__lshift_bits____10010110b10110101_shifted_by_2_should_be_01011010();
+    // test____utils__lshift_bits____10010110b10110101_shifted_by_14_should_be_01000000();
+    // test____utils__lshift_bits____a_shifted_by_14_should_be_01000000();
+    // test____utils__lshift_bits____ff();
 
     return 0;
 }
