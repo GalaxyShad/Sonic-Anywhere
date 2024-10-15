@@ -1,6 +1,5 @@
 #include "../compressors.h"
 #include "include_backend/debug.h"
-#define BREAK_LOOP 1
 
 static u8 expand_description_byte__(u8 byte) {
     u8 reverse_byte = byte;
@@ -38,12 +37,14 @@ static void uncompressed_data__(State* state) {
 
     if (check_out_of_range("w_byte_index", state->w_byte_index, "dst", state->dst_size))
         return;
+
     state->dst[state->w_byte_index] = state->src[state->r_byte_index];
     state->w_byte_index++;
     state->r_byte_index++;
 
     state->description_length--;
 };
+
 static void inline_dictionary_match__(State* state) {
     if (check_out_of_range("r_byte_index", state->r_byte_index, "src", state->src_size))
         return;
@@ -54,6 +55,7 @@ static void inline_dictionary_match__(State* state) {
 
     if (check_out_of_range("w_byte_index", state->w_byte_index + count_copy_byte, "dst", state->dst_size))
         return;
+
     while (count_copy_byte > 0) {
         state->dst[state->w_byte_index] = state->dst[state->w_byte_index + offset_byte];
         state->w_byte_index++;
@@ -62,6 +64,7 @@ static void inline_dictionary_match__(State* state) {
 
     state->description_length -= 4;
 };
+
 static void full_dictionary_matches__(State* state) {
     if (check_out_of_range("r_byte_index", state->r_byte_index + 3, "src", state->src_size))
         return;
@@ -87,6 +90,7 @@ static void full_dictionary_matches__(State* state) {
 
     if (check_out_of_range("w_byte_index", state->w_byte_index + count_copy_byte, "dst", state->dst_size))
         return;
+
     while (count_copy_byte > 0) {
         state->dst[state->w_byte_index] = state->dst[state->w_byte_index + offset_byte];
         state->w_byte_index++;
