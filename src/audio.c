@@ -1,7 +1,7 @@
-#include "include_backend/audio.h"
+#include "include_backend/mdaudio.h"
 
 #include "include_backend/debug.h"
 
-void audio__stop_sounds() {
+void md_audio__stop_sounds() {
     NOT_IMPLEMENTED;
 }

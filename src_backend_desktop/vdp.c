@@ -1,4 +1,4 @@
-#include "include_backend/vdp.h"
+#include "include_backend/mdvdp.h"
 
 #include "include_backend/debug.h"
 
@@ -9,7 +9,7 @@ static u8 palette_bg_index__ = 0;
 
 ////////////////////////////////////////////////////////
 
-void vdp_palette__load(const ReadonlyByteArray* palette) {
+void md_vdp_palette__load(const ReadonlyByteArray* palette) {
     LOG("called [%s] pal_id = %d", __func__)
 
     for (int i = 0; i < palette->size / 2; i++) {
@@ -18,35 +18,35 @@ void vdp_palette__load(const ReadonlyByteArray* palette) {
 }
 
 
-void vdp__set_color_mode(VdpColorMode mode) {
+void md_vdp__set_color_mode(MdVdpColorMode mode) {
     LOG("called [%s] VDP ColorMode = %d", __func__, mode)
     NOT_IMPLEMENTED
 }
 
-void vdp__set_background_color(u8 palette_number, u8 color_number) {
+void md_vdp__set_background_color(u8 palette_number, u8 color_number) {
     LOG("called [%s] VDP BG color was set to pal_row = %d and index = %d", __func__, palette_number, color_number)
     palette_bg_index__ = palette_number * 16 + color_number;
 }
 
-void vdp__clear_screen() {
+void md_vdp__clear_screen() {
     LOG("called [%s] VDP screen cleared", __func__)
     NOT_IMPLEMENTED
 }
 
-void vdp__set_scrolling_mode(VdpVScrollMode vertical_mode, VdpHScrollMode horizontal_mode, int enable_interrupt) {
+void md_vdp__set_scrolling_mode(MdVdpVScrollMode vertical_mode, MdVdpHScrollMode horizontal_mode, int enable_interrupt) {
     LOG(
       "called [%s] VDP srolling mode set to VScroll = %s, HScroll = %s", __func__,
-      (vertical_mode == VDP_VSCROLL_MODE__FULL_SCROLL) ? "VDP_VSCROLL_MODE__FULL_SCROLL"
-                                                       : "VDP_VSCROLL_MODE__EACH_2_CELL",
-      (horizontal_mode == VDP_HSCROLL_MODE__FULL_SCROLL)   ? "VDP_HSCROLL_MODE__FULL_SCROLL"
-      : (horizontal_mode == VDP_HSCROLL_MODE__PROHIBITED)  ? "VDP_HSCROLL_MODE__PROHIBITED"
-      : (horizontal_mode == VDP_HSCROLL_MODE__EACH_1_CELL) ? "VDP_HSCROLL_MODE__EACH_1_CELL"
-                                                           : "VDP_HSCROLL_MODE__EACH_1_LINE"
+      (vertical_mode == MD_VDP_VSCROLL_MODE__FULL_SCROLL) ? "MD_VDP_VSCROLL_MODE__FULL_SCROLL"
+                                                       : "MD_VDP_VSCROLL_MODE__EACH_2_CELL",
+      (horizontal_mode == MD_VDP_HSCROLL_MODE__FULL_SCROLL)   ? "MD_VDP_HSCROLL_MODE__FULL_SCROLL"
+      : (horizontal_mode == MD_VDP_HSCROLL_MODE__PROHIBITED)  ? "MD_VDP_HSCROLL_MODE__PROHIBITED"
+      : (horizontal_mode == MD_VDP_HSCROLL_MODE__EACH_1_CELL) ? "MD_VDP_HSCROLL_MODE__EACH_1_CELL"
+                                                           : "MD_VDP_HSCROLL_MODE__EACH_1_LINE"
     )
     NOT_IMPLEMENTED
 }
 
-void vdp__set_ram_address(VdpRamAccessMode access_mode, u16 adr, bool vram_to_vram_copy, bool dma) {
+void md_vdp__set_ram_address(MdVdpRamAccessMode access_mode, u16 adr, bool vram_to_vram_copy, bool dma) {
     NOT_IMPLEMENTED
 }
 
@@ -93,12 +93,12 @@ static void vdp__set_window__(const u8* window, size window_size) {
     is_vdp_window_changed__ = 1;
 }
 
-void vdp__set_name_table_location_for_plane(VdpPlane plane_id, MutableByteArray* mem) {
+void md_vdp__set_name_table_location_for_plane(MdVdpPlane plane_id, MutableByteArray* mem) {
     LOG(
-      "called [%s] VDP Plane [%s] addr set to %p", __func__, (plane_id == VDP_PLANE__BACKGROUND) ? "BG" : "FG", mem->arr
+      "called [%s] VDP Plane [%s] addr set to %p", __func__, (plane_id == MD_VDP_PLANE__BACKGROUND) ? "BG" : "FG", mem->arr
     )
 
-    if (plane_id == VDP_PLANE__WINDOW) {
+    if (plane_id == MD_VDP_PLANE__WINDOW) {
         vdp__set_window__(mem->arr, mem->size);
         return;
     }
@@ -173,8 +173,8 @@ static void vdp__screen_clear__() {
     ClearBackground(GetColor(0x00AAAAFF));
 }
 
-void vdp__copy_tilemap_to_layer_r(
-  VdpPlane plane_id, u8 shift_x, u8 shift_y, const ReadonlyByteArray* tilemap, size cells_width, size cells_height
+void md_vdp__copy_tilemap_to_layer_r(
+  MdVdpPlane plane_id, u8 shift_x, u8 shift_y, const ReadonlyByteArray* tilemap, size cells_width, size cells_height
 ) {
     Plane* p = planes__ + plane_id;
 
@@ -194,7 +194,7 @@ void vdp__copy_tilemap_to_layer_r(
 
 static int shader_palette__[4 * 16 * 3] = {0};
 
-void vdp_palette__load_u16(const u16* pal) {
+void md_vdp_palette__load_u16(const u16* pal) {
     for (int i = 0; i < 16 * 4; i++) {
         palette__[i] = pal[i];
 
@@ -206,7 +206,7 @@ void vdp_palette__load_u16(const u16* pal) {
     }
 }
 
-void vdp__init() {
+void md_vdp__init() {
     InitWindow(1280, 720, "Sonic Anywhere");
     InitAudioDevice();
 
@@ -227,7 +227,7 @@ void vdp__init() {
 }
 
 // Render without interrupts
-void vdp__render() {
+void md_vdp__render() {
     int paletteLoc = GetShaderLocation(palette_shader__, "palette");
     SetShaderValueV(palette_shader__, paletteLoc, shader_palette__, SHADER_UNIFORM_IVEC3, 16 * 4);
 
@@ -257,11 +257,11 @@ void vdp__render() {
 
     BeginShaderMode(palette_shader__);
     {
-        draw_plane__(&planes__[VDP_PLANE__BACKGROUND], 140, 100, 2);
-        draw_plane__(&planes__[VDP_PLANE__FOREGROUND], 140, 100, 2);
+        draw_plane__(&planes__[MD_VDP_PLANE__BACKGROUND], 140, 100, 2);
+        draw_plane__(&planes__[MD_VDP_PLANE__FOREGROUND], 140, 100, 2);
 //
-//        draw_plane__(&planes__[VDP_PLANE__BACKGROUND], 800, 100, 1);
-//        draw_plane__(&planes__[VDP_PLANE__FOREGROUND], 800, 100 + 224, 1);
+//        draw_plane__(&planes__[MD_VDP_PLANE__BACKGROUND], 800, 100, 1);
+//        draw_plane__(&planes__[MD_VDP_PLANE__FOREGROUND], 800, 100 + 224, 1);
 
 //        if (vdp_window_tex__.id != 0) {
 //            DrawTextureEx(vdp_window_tex__, (Vector2){32, 32}, 0, 3, WHITE);

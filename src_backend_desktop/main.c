@@ -1,7 +1,7 @@
 
 #include "src/gamemode/game.h"
 
-#include "include_backend/vdp.h"
+#include "include_backend/mdvdp.h"
 
 void* game_thread__(void *ptr) {
    game__init();
@@ -35,9 +35,9 @@ DWORD WINAPI game_thread_windows(LPVOID lpParam) {
 int main(int argc, char* args[]) {
     HANDLE game_thread = CreateThread(NULL, 0, game_thread_windows, NULL, 0, NULL);
 
-    vdp__init();
+    md_vdp__init();
     while (1) {
-        vdp__render();
+        md_vdp__render();
     }
 
     WaitForSingleObject(game_thread, INFINITE); // Wait for the game thread to finish

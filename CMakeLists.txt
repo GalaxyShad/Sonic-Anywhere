@@ -26,9 +26,9 @@ add_executable(sonic_anywhere
         src_backend_desktop/mdcolor.c
         src/gamevdp.h
         src/gamevdp.c
-        include_backend/mem.h
+        include_backend/mdmem.h
         src_backend_desktop/mem.c
-        include_backend/system.h
+        include_backend/mdsystem.h
         src_backend_desktop/system.c
         config/config.h
         include_backend/macroutils.h

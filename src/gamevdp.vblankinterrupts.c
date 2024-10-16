@@ -3,8 +3,8 @@
 #include "gamemode/game.h"
 
 #include "include_backend/debug.h"
-#include "include_backend/system.h"
-#include "include_backend/vdp.h"
+#include "include_backend/mdsystem.h"
+#include "include_backend/mdvdp.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -91,7 +91,7 @@ static void vblank_00__() {
         return;
     }
 
-    if (system__is_pal())
+    if (md_system__is_pal())
         vblank_wait_pal__();
 
     hblank_is_need_to_change_palette__ = 1;
@@ -286,11 +286,11 @@ void game_vdp__on_vblank_interrupt() {
         // goto VBla_00
     }
 
-    vdp__set_ram_address(VDP_RAM_ACCESS_MODE__CRAM_WRITE, 0, 0, 0);
+    md_vdp__set_ram_address(MD_VDP_RAM_ACCESS_MODE__CRAM_WRITE, 0, 0, 0);
     //    move.l	(v_scrposy_vdp).w,(vdp_data_port).l ; send screen y-axis pos. to VSRAM
 
     //    .waitPAL:
-    if (system__is_pal()) {
+    if (md_system__is_pal()) {
         vblank_wait_pal__(); // wait here in a loop doing nothing for a while...
     }
 

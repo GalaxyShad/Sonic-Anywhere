@@ -2,8 +2,8 @@
 
 #include "include_backend/debug.h"
 #include "include_backend/macroutils.h"
-#include "include_backend/system.h"
-#include "include_backend/vdp.h"
+#include "include_backend/mdsystem.h"
+#include "include_backend/mdvdp.h"
 
 #include "gamemode/game.h"
 #include "resources/resourcestore.h"
@@ -58,7 +58,7 @@ void game_vdp__set_palette_water_state(GameVdpPaletteWaterState water_state) {
 }
 
 void game_vdp__palette_copy_to_vdp() {
-    vdp_palette__load_u16(
+    md_vdp_palette__load_u16(
       (water_state__ == GAME_VDP_PALETTE_WATER_STATE__ALL_UNDERWATER) ? palette_water__ : palette__
     );
 }
