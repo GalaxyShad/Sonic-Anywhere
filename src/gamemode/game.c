@@ -13,10 +13,10 @@ void game__load_game_mode(GameMode gm) {
 }
 
 void game__init() {
-//    md_vdp__init();
+    //    md_vdp__init();
 
-md_vdp__set_name_table_location_for_plane(MD_VDP_PLANE__BACKGROUND, mem__vram_background());
-    md_vdp__set_name_table_location_for_plane(MD_VDP_PLANE__FOREGROUND, mem__vram_foreground());
+    md_vdp__set_name_table_location_for_plane(MD_VDP_PLANE__BACKGROUND, md_mem__vram()->plane_background_mut);
+    md_vdp__set_name_table_location_for_plane(MD_VDP_PLANE__FOREGROUND, md_mem__vram()->plane_foreground_mut);
 
     // TODO clear_ram();
 

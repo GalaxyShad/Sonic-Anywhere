@@ -35,9 +35,9 @@ typedef enum MdVdpPlane {
     MD_VDP_PLANE__WINDOW
 } MdVdpPlane;
 
-void md_vdp__set_name_table_location_for_plane(MdVdpPlane plane_id, MutableByteArray* mem);
+void md_vdp__set_name_table_location_for_plane(MdVdpPlane plane_id, const MutableByteArray* mem);
 
-void md_vdp__copy_tilemap_to_layer_r(
+void md_vdp__copy_tilemap_to_plane_r(
   MdVdpPlane plane_id, u8 shift_x, u8 shift_y, const ReadonlyByteArray* tilemap, size cells_width, size cells_height
 );
 

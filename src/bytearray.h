@@ -13,4 +13,8 @@ typedef struct ReadonlyByteArray {
     size size;
 } ReadonlyByteArray;
 
+inline MutableByteArray bytearray__shift_mut(const MutableByteArray* arr, i32 shift_bytes) {
+    return (MutableByteArray){arr->arr + shift_bytes, arr->size - shift_bytes};
+}
+
 #endif // SONIC_ANYWHERE_BYTEARRAY_H

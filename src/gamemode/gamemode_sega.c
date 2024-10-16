@@ -177,8 +177,8 @@ void game_mode_sega() {
     palette_fadeout__();
 
     md_vdp__set_color_mode(MD_VDP_COLOR_MODE_8_COLOR);
-    md_vdp__set_name_table_location_for_plane(MD_VDP_PLANE__FOREGROUND, mem__vram_foreground());
-    md_vdp__set_name_table_location_for_plane(MD_VDP_PLANE__BACKGROUND, mem__vram_background());
+    md_vdp__set_name_table_location_for_plane(MD_VDP_PLANE__FOREGROUND, md_mem__vram()->plane_foreground_mut);
+    md_vdp__set_name_table_location_for_plane(MD_VDP_PLANE__BACKGROUND, md_mem__vram()->plane_background_mut);
     md_vdp__set_background_color(0, 0);
     md_vdp__set_scrolling_mode(MD_VDP_VSCROLL_MODE__FULL_SCROLL, MD_VDP_HSCROLL_MODE__FULL_SCROLL, 0);
 
@@ -199,26 +199,22 @@ void game_mode_sega() {
 
     // ---- Load Sega logo patterns ---- //
     ReadonlyByteArray sega_logo_patterns_nem = resource_store__get(patterns_sega_logo_id);
-    compressors__nemesis_decompress(
-      sega_logo_patterns_nem.arr, sega_logo_patterns_nem.size, mem__vram_window()->arr, mem__vram_window()->size
-    );
+    compressors__nemesis_decompress_byte_arr(&sega_logo_patterns_nem, md_mem__vram()->plane_window_mut);
 
     // ---- Load Sega logo mappings ---- //
-    md_vdp__set_name_table_location_for_plane(MD_VDP_PLANE__WINDOW, mem__vram_window());
+    md_vdp__set_name_table_location_for_plane(MD_VDP_PLANE__WINDOW, md_mem__vram()->plane_window_mut);
     ReadonlyByteArray sega_logo_mappings = resource_store__get(tilemap_sega_logo_id);
-    compressors__enigma_decompress(
-      sega_logo_mappings.arr, sega_logo_mappings.size, mem__chunks()->arr, mem__chunks()->size, 0
-    );
+    compressors__enigma_decompress_byte_arr(&sega_logo_mappings, md_mem()->chunks_mut, 0);
 
     // ---- Copy to display ---- //
-    MutableByteArray foreground = mem__chunks_shifted(24 * 8 * 2);
-    md_vdp__copy_tilemap_to_layer_r(MD_VDP_PLANE__BACKGROUND, 8, 0xA, mem__chunks(), 24, 8);
-    md_vdp__copy_tilemap_to_layer_r(MD_VDP_PLANE__FOREGROUND, 0, 0, &foreground, 40, 28);
+    MutableByteArray foreground = bytearray__shift_mut(md_mem()->chunks_mut, 24 * 8 * 2);
+    md_vdp__copy_tilemap_to_plane_r(MD_VDP_PLANE__BACKGROUND, 8, 0xA, (ReadonlyByteArray*) md_mem()->chunks_mut, 24, 8);
+    md_vdp__copy_tilemap_to_plane_r(MD_VDP_PLANE__FOREGROUND, 0, 0, (ReadonlyByteArray*) &foreground, 40, 28);
 
     // Decided to apply REV1 fix
     if (md_system__is_region_japan()) {
-        MutableByteArray white_rect = mem__chunks_shifted(0xA40);
-        md_vdp__copy_tilemap_to_layer_r(MD_VDP_PLANE__FOREGROUND, 0x1D, 0xA, &white_rect, 3, 2);
+        MutableByteArray white_rect = bytearray__shift_mut(md_mem()->chunks_mut, 0xA40);
+        md_vdp__copy_tilemap_to_plane_r(MD_VDP_PLANE__FOREGROUND, 0x1D, 0xA, (ReadonlyByteArray*) &white_rect, 3, 2);
     }
 
     // .loadpal

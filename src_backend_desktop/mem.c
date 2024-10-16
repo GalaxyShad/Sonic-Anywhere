@@ -4,53 +4,34 @@
 
 #define PLANE_SIZE 0x2000
 
-const MutableByteArray* mem__vram_foreground() {
-    static u8 mem_foreground__[PLANE_SIZE];
+const MdMemoryVram* md_mem__vram() {
+    static u8 fg[PLANE_SIZE];
+    static MutableByteArray barr_fg = {fg, PLANE_SIZE};
 
-    static MutableByteArray byte_arr_foreground = {
-      mem_foreground__, PLANE_SIZE,
+    static u8 bg[PLANE_SIZE];
+    static MutableByteArray barr_bg = {bg, PLANE_SIZE};
+
+    static u8 window[PLANE_SIZE];
+    static MutableByteArray barr_window = {window, PLANE_SIZE};
+
+    ///////////////////////////////////////////////
+
+    static const MdMemoryVram vram = {
+      &barr_fg,
+      &barr_bg,
+      &barr_window,
     };
 
-    return &byte_arr_foreground;
+    return &vram;
 }
 
-const MutableByteArray* mem__vram_background() {
-    static u8 mem_background__[PLANE_SIZE];
+const MdMemory* md_mem() {
+    static u8 chunks[0x52 * 0x200];
+    static MutableByteArray byte_arr_chunks = {chunks, 0x52 * 0x200};
 
-    static MutableByteArray byte_arr_background = {
-      mem_background__, PLANE_SIZE
+    static const MdMemory mem = {
+      &byte_arr_chunks
     };
 
-    return &byte_arr_background;
+    return &mem;
 }
-
-const MutableByteArray* mem__vram_window() {
-    static u8 mem_window__[PLANE_SIZE];
-
-    static MutableByteArray byte_arr_window = {
-      mem_window__, PLANE_SIZE
-    };
-
-    return &byte_arr_window;
-}
-
-////////////////////////////////////////////////////////////////////////
-
-static u8 chunks[0x52 * 0x200];
-
-static MutableByteArray byte_arr_chunks = {
-  chunks, 0x52 * 0x200
-};
-
-const MutableByteArray* mem__chunks() {
-    return &byte_arr_chunks;
-}
-
-MutableByteArray mem__chunks_shifted(int shift) {
-    return (MutableByteArray) { chunks + shift, byte_arr_chunks.size - shift };
-}
-
-const MutableByteArray* mem__vram_sprites() {
-    NOT_IMPLEMENTED
-}
-

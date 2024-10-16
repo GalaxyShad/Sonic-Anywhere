@@ -52,7 +52,6 @@ void game_vdp__load_palette(GameVdpPaletteID pal_id) {
 
 static GameVdpPaletteWaterState water_state__;
 
-
 void game_vdp__set_palette_water_state(GameVdpPaletteWaterState water_state) {
     water_state__ = water_state;
 }

@@ -93,7 +93,7 @@ static void vdp__set_window__(const u8* window, size window_size) {
     is_vdp_window_changed__ = 1;
 }
 
-void md_vdp__set_name_table_location_for_plane(MdVdpPlane plane_id, MutableByteArray* mem) {
+void md_vdp__set_name_table_location_for_plane(MdVdpPlane plane_id, const MutableByteArray* mem) {
     LOG(
       "called [%s] VDP Plane [%s] addr set to %p", __func__, (plane_id == MD_VDP_PLANE__BACKGROUND) ? "BG" : "FG", mem->arr
     )
@@ -173,7 +173,7 @@ static void vdp__screen_clear__() {
     ClearBackground(GetColor(0x00AAAAFF));
 }
 
-void md_vdp__copy_tilemap_to_layer_r(
+void md_vdp__copy_tilemap_to_plane_r(
   MdVdpPlane plane_id, u8 shift_x, u8 shift_y, const ReadonlyByteArray* tilemap, size cells_width, size cells_height
 ) {
     Plane* p = planes__ + plane_id;
