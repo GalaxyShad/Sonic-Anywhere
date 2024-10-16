@@ -50,6 +50,8 @@ void game_vdp__palette_foreach(GameVdpPaletteLayerID pal_id, MDColor (*func)(MDC
 
 void game_vdp__palette_set_color(u8 index, MDColor color);
 
+void game_vdp__palette_copy_to_vdp();
+
 // same as -> move.b $14,(v_vbla_routine).w
 void game_vdp__set_vblank_routine_counter(u8 routine);
 
