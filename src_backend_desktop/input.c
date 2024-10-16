@@ -4,6 +4,6 @@
 
 int input__is_btn_pressed(ButtonCode btn_code) {
     LOG("Button with id: %02X not pressed", btn_code)
-    RAISE_NOT_IMPLEMENTED
+    NOT_IMPLEMENTED
     return 0;
 }

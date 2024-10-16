@@ -1,6 +1,7 @@
 #include "gamevdp.h"
 
 #include "include_backend/debug.h"
+#include "include_backend/macroutils.h"
 #include "include_backend/system.h"
 #include "include_backend/vdp.h"
 
@@ -15,69 +16,30 @@ static MDColor palette_water__[16 * 4];
 void game_vdp__load_palette(GameVdpPaletteID pal_id) {
     ResourceID res_id;
 
+    // clang-format off
     switch (pal_id) {
-
-    case GAME_VDP_PALETTE_ID__SEGA_LOGO:
-        res_id = RESOURCE__PALETTE__SEGA1_BIN;
-        break;
-    case GAME_VDP_PALETTE_ID__TITLE:
-        res_id = RESOURCE__PALETTE__TITLE_SCREEN_BIN;
-        break;
-    case GAME_VDP_PALETTE_ID__LEVEL_SELECT:
-        res_id = RESOURCE__PALETTE__LEVEL_SELECT_BIN;
-        break;
-    case GAME_VDP_PALETTE_ID__SONIC:
-        res_id = RESOURCE__PALETTE__SONIC_BIN;
-        break;
-    case GAME_VDP_PALETTE_ID__GREEN_HILL_ZONE:
-        res_id = RESOURCE__PALETTE__GREEN_HILL_ZONE_BIN;
-        break;
-    case GAME_VDP_PALETTE_ID__LABYRINTH_ZONE:
-        res_id = RESOURCE__PALETTE__LABYRINTH_ZONE_BIN;
-        break;
-    case GAME_VDP_PALETTE_ID__MARBLE_ZONE:
-        res_id = RESOURCE__PALETTE__MARBLE_ZONE_BIN;
-        break;
-    case GAME_VDP_PALETTE_ID__STAR_LIGHT_ZONE:
-        res_id = RESOURCE__PALETTE__STAR_LIGHT_ZONE_BIN;
-        break;
-    case GAME_VDP_PALETTE_ID__SPRING_YARD_ZONE:
-        res_id = RESOURCE__PALETTE__SPRING_YARD_ZONE_BIN;
-        break;
-    case GAME_VDP_PALETTE_ID__SCRAP_BRAIN_ZONE_ACT_1:
-        res_id = RESOURCE__PALETTE__SBZ_ACT_1_BIN;
-        break;
-    case GAME_VDP_PALETTE_ID__SPECIAL_STAGE:
-        res_id = RESOURCE__PALETTE__SPECIAL_STAGE_BIN;
-        break;
-    case GAME_VDP_PALETTE_ID__LABYRINTH_ZONE_WATER:
-        res_id = RESOURCE__PALETTE__LABYRINTH_ZONE_UNDERWATER_BIN;
-        break;
-    case GAME_VDP_PALETTE_ID__SCRAP_BRAIN_ZONE_ACT_3:
-        res_id = RESOURCE__PALETTE__SBZ_ACT_3_BIN;
-        break;
-    case GAME_VDP_PALETTE_ID__SCRAP_BRAIN_ZONE_ACT_3_WATER:
-        res_id = RESOURCE__PALETTE__SBZ_ACT_3_BIN;
-        break;
-    case GAME_VDP_PALETTE_ID__SCRAP_BRAIN_ZONE_ACT_2:
-        res_id = RESOURCE__PALETTE__SBZ_ACT_2_BIN;
-        break;
-    case GAME_VDP_PALETTE_ID__SONIC_UNDERWATER_LABYRINTH:
-        res_id = RESOURCE__PALETTE__SONIC_LZ_UNDERWATER_BIN;
-        break;
-    case GAME_VDP_PALETTE_ID__SONIC_UNDERWATER_SCRAP_BRAIN:
-        res_id = RESOURCE__PALETTE__SONIC_SBZ3_UNDERWATER_BIN;
-        break;
-    case GAME_VDP_PALETTE_ID__SPECIAL_STAGE_RESULTS:
-        res_id = RESOURCE__PALETTE__SPECIAL_STAGE_RESULTS_BIN;
-        break;
-    case GAME_VDP_PALETTE_ID__SPECIAL_STAGE_RESULTS_CONTINUE:
-        res_id = RESOURCE__PALETTE__SPECIAL_STAGE_CONTINUE_BONUS_BIN;
-        break;
-    case GAME_VDP_PALETTE_ID__ENDING_SEQUENCE:
-        res_id = RESOURCE__PALETTE__ENDING_BIN;
-        break;
+        MAP_CASE(GAME_VDP_PALETTE_ID__SEGA_LOGO,                        RESOURCE__PALETTE__SEGA1_BIN,                           res_id)
+        MAP_CASE(GAME_VDP_PALETTE_ID__TITLE,                            RESOURCE__PALETTE__TITLE_SCREEN_BIN,                    res_id)
+        MAP_CASE(GAME_VDP_PALETTE_ID__LEVEL_SELECT,                     RESOURCE__PALETTE__LEVEL_SELECT_BIN,                    res_id)
+        MAP_CASE(GAME_VDP_PALETTE_ID__SONIC,                            RESOURCE__PALETTE__SONIC_BIN,                           res_id)
+        MAP_CASE(GAME_VDP_PALETTE_ID__GREEN_HILL_ZONE,                  RESOURCE__PALETTE__GREEN_HILL_ZONE_BIN,                 res_id)
+        MAP_CASE(GAME_VDP_PALETTE_ID__LABYRINTH_ZONE,                   RESOURCE__PALETTE__LABYRINTH_ZONE_BIN,                  res_id)
+        MAP_CASE(GAME_VDP_PALETTE_ID__MARBLE_ZONE,                      RESOURCE__PALETTE__MARBLE_ZONE_BIN,                     res_id)
+        MAP_CASE(GAME_VDP_PALETTE_ID__STAR_LIGHT_ZONE,                  RESOURCE__PALETTE__STAR_LIGHT_ZONE_BIN,                 res_id)
+        MAP_CASE(GAME_VDP_PALETTE_ID__SPRING_YARD_ZONE,                 RESOURCE__PALETTE__SPRING_YARD_ZONE_BIN,                res_id)
+        MAP_CASE(GAME_VDP_PALETTE_ID__SCRAP_BRAIN_ZONE_ACT_1,           RESOURCE__PALETTE__SBZ_ACT_1_BIN,                       res_id)
+        MAP_CASE(GAME_VDP_PALETTE_ID__SPECIAL_STAGE,                    RESOURCE__PALETTE__SPECIAL_STAGE_BIN,                   res_id)
+        MAP_CASE(GAME_VDP_PALETTE_ID__LABYRINTH_ZONE_WATER,             RESOURCE__PALETTE__LABYRINTH_ZONE_UNDERWATER_BIN,       res_id)
+        MAP_CASE(GAME_VDP_PALETTE_ID__SCRAP_BRAIN_ZONE_ACT_3,           RESOURCE__PALETTE__SBZ_ACT_3_BIN,                       res_id)
+        MAP_CASE(GAME_VDP_PALETTE_ID__SCRAP_BRAIN_ZONE_ACT_3_WATER,     RESOURCE__PALETTE__CYCLE_SBZ3_WATERFALL_BIN,            res_id)
+        MAP_CASE(GAME_VDP_PALETTE_ID__SCRAP_BRAIN_ZONE_ACT_2,           RESOURCE__PALETTE__SBZ_ACT_2_BIN,                       res_id)
+        MAP_CASE(GAME_VDP_PALETTE_ID__SONIC_UNDERWATER_LABYRINTH,       RESOURCE__PALETTE__SONIC_LZ_UNDERWATER_BIN,             res_id)
+        MAP_CASE(GAME_VDP_PALETTE_ID__SONIC_UNDERWATER_SCRAP_BRAIN,     RESOURCE__PALETTE__SONIC_SBZ3_UNDERWATER_BIN,           res_id)
+        MAP_CASE(GAME_VDP_PALETTE_ID__SPECIAL_STAGE_RESULTS,            RESOURCE__PALETTE__SPECIAL_STAGE_RESULTS_BIN,           res_id)
+        MAP_CASE(GAME_VDP_PALETTE_ID__SPECIAL_STAGE_RESULTS_CONTINUE,   RESOURCE__PALETTE__SPECIAL_STAGE_CONTINUE_BONUS_BIN,    res_id)
+        MAP_CASE(GAME_VDP_PALETTE_ID__ENDING_SEQUENCE,                  RESOURCE__PALETTE__ENDING_BIN,                          res_id)
     }
+    // clang-format on
 
     ReadonlyByteArray res = resource_store__get(res_id);
 
@@ -112,7 +74,7 @@ void game_vdp__palette_set_color(u8 index, MDColor color) {
 //////////////////////////////////////////////////////////////////////
 static u16 vblank_routine__ = 0;
 
-static u16 vblank_count = 0;
+static u16 vblank_count__ = 0;
 
 static bool hblank_is_need_to_change_palette = 0; // flag set to change palette during HBlank (0000 = no; 0001 = change)
 
@@ -137,7 +99,7 @@ static void vblank_14__();
 static void vblank_16__();
 
 static void vblank_stop_music__() {
-    RAISE_NOT_IMPLEMENTED
+    NOT_IMPLEMENTED
 }
 
 static void vblank_wait_pal__() {
@@ -168,7 +130,7 @@ static void vblank_update__() {
 }
 
 // clang-format off
-static void (*vblank_index[])() = {
+static void (*vblank_index__[])() = {
     vblank_00__,vblank_02__,
     vblank_04__,vblank_06__,
     vblank_08__,vblank_0A__,
@@ -200,13 +162,13 @@ void game_vdp__on_vblank_interrupt() {
 
     d0 = (d0 & 0x3E) >> 1;
 
-    vblank_index[d0]();
+    vblank_index__[d0]();
 
     // VBla_Music:
     vblank_stop_music__();
 
     // VBla_Exit:
-    vblank_count++;
+    vblank_count__++;
 }
 
 void game_vdp__wait_for_vblank() {
@@ -262,7 +224,7 @@ static void vblank_process_demo_timer__() {
 
 static void sub_1642__() {
     // TODO
-    RAISE_NOT_IMPLEMENTED
+    NOT_IMPLEMENTED
 }
 
 static void vblank_02__() {
@@ -289,7 +251,7 @@ static void vblank_06__() {
 }
 
 static void load_new_sonic_gfx__() {
-    RAISE_NOT_IMPLEMENTED
+    NOT_IMPLEMENTED
     // TODO
     // 		writeVRAM	v_sgfx_buffer,ArtTile_Sonic*tile_size ; load new Sonic gfx
     //		move.b	#0,(f_sonframechg).w
@@ -369,14 +331,14 @@ static void vblank_0C__() {
     //		jsr	(HUD_Update).l
     //		bsr.w	sub_1642
     //		rts
-    RAISE_NOT_IMPLEMENTED
+    NOT_IMPLEMENTED
 }
 
 static void vblank_0E__() {
     vblank_update__();
     //  addq.b	#1,(v_vbla_0e_counter).w ; Unused besides this one write...
     vblank_routine__ = 0xE;
-    RAISE_NOT_IMPLEMENTED
+    NOT_IMPLEMENTED
 }
 
 static void vblank_10__() {
@@ -388,7 +350,7 @@ static void vblank_10__() {
 
     vblank_08__();
 
-    RAISE_NOT_IMPLEMENTED
+    NOT_IMPLEMENTED
 }
 
 static void vblank_12__() {
@@ -396,7 +358,7 @@ static void vblank_12__() {
     // move.w	(v_hbla_hreg).w,(a5)
     sub_1642__();
 
-    RAISE_NOT_IMPLEMENTED
+    NOT_IMPLEMENTED
 }
 
 static void vblank_16__() {
@@ -420,5 +382,5 @@ static void vblank_16__() {
     //.end:
     //		rts
 
-    RAISE_NOT_IMPLEMENTED
+    NOT_IMPLEMENTED
 }

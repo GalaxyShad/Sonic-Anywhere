@@ -27,7 +27,9 @@ typedef enum GameVdpPaletteID {
 
     GAME_VDP_PALETTE_ID__SPECIAL_STAGE_RESULTS,
     GAME_VDP_PALETTE_ID__SPECIAL_STAGE_RESULTS_CONTINUE,
-    GAME_VDP_PALETTE_ID__ENDING_SEQUENCE
+    GAME_VDP_PALETTE_ID__ENDING_SEQUENCE,
+
+    GAME_VDP_PALETTE_ID__SIZE__,    // Just to determine size of Enum
 } GameVdpPaletteID;
 
 void game_vdp__load_palette(GameVdpPaletteID pal_id);

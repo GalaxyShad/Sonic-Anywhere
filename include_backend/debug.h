@@ -19,7 +19,7 @@ void log__(const char* function, const char* file, int line, int level, const ch
 #define LOG_WARN(...) log__(__func__, __FILE__, __LINE__, 1, __VA_ARGS__);
 #define LOG_ERROR(...) log__(__func__, __FILE__, __LINE__, 2, __VA_ARGS__);
 
-#define RAISE_NOT_IMPLEMENTED \
+#define NOT_IMPLEMENTED \
     LOG_WARN("FUNCTION NOT IMPLEMENTED!!! [%s] | LINE: %d | FILE: %s", __func__, __LINE__, __FILE__);
 
 #else
@@ -28,7 +28,7 @@ void log__(const char* function, const char* file, int line, int level, const ch
 #define LOG_WARN(...)
 #define LOG_ERROR(...)
 
-#define RAISE_NOT_IMPLEMENTED
+#define NOT_IMPLEMENTED
 
 #endif
 

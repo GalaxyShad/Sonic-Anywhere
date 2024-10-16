@@ -20,7 +20,7 @@ void vdp_palette__load(const ReadonlyByteArray* palette) {
 
 void vdp__set_color_mode(VdpColorMode mode) {
     LOG("called [%s] VDP ColorMode = %d", __func__, mode)
-    RAISE_NOT_IMPLEMENTED
+    NOT_IMPLEMENTED
 }
 
 void vdp__set_background_color(u8 palette_number, u8 color_number) {
@@ -30,7 +30,7 @@ void vdp__set_background_color(u8 palette_number, u8 color_number) {
 
 void vdp__clear_screen() {
     LOG("called [%s] VDP screen cleared", __func__)
-    RAISE_NOT_IMPLEMENTED
+    NOT_IMPLEMENTED
 }
 
 void vdp__set_scrolling_mode(VdpVScrollMode vertical_mode, VdpHScrollMode horizontal_mode, int enable_interrupt) {
@@ -43,11 +43,11 @@ void vdp__set_scrolling_mode(VdpVScrollMode vertical_mode, VdpHScrollMode horizo
       : (horizontal_mode == VDP_HSCROLL_MODE__EACH_1_CELL) ? "VDP_HSCROLL_MODE__EACH_1_CELL"
                                                            : "VDP_HSCROLL_MODE__EACH_1_LINE"
     )
-    RAISE_NOT_IMPLEMENTED
+    NOT_IMPLEMENTED
 }
 
 void vdp__set_ram_address(VdpRamAccessMode access_mode, u16 adr, bool vram_to_vram_copy, bool dma) {
-    RAISE_NOT_IMPLEMENTED
+    NOT_IMPLEMENTED
 }
 
 

@@ -51,6 +51,6 @@ MutableByteArray mem__chunks_shifted(int shift) {
 }
 
 const MutableByteArray* mem__vram_sprites() {
-    RAISE_NOT_IMPLEMENTED
+    NOT_IMPLEMENTED
 }
 

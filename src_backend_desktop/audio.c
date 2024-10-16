@@ -15,5 +15,5 @@ void audio__play_sound_special(SoundID snd_id) {
     PlaySound(snd__);
 
     LOG("Playing sound id: %02X", snd_id)
-    RAISE_NOT_IMPLEMENTED
+    NOT_IMPLEMENTED
 }

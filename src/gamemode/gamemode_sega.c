@@ -3,9 +3,9 @@
 #include "include_backend/input.h"
 #include "include_backend/interrupt.h"
 #include "include_backend/mem.h"
-#include "include_backend/plc.h"
 #include "include_backend/system.h"
 #include "include_backend/vdp.h"
+#include "src/plc.h"
 
 #include "../compressors.h"
 
@@ -237,7 +237,7 @@ void game_mode_sega() {
 
     // Sega_WaitPal:
 
-    for (int i = 0; i < 0x80; i++) {
+    for (int i = 0; i < 64; i++) {
         game_vdp__palette_set_color(i, 0xeee);
     }
 
