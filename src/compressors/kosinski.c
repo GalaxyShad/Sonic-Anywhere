@@ -138,3 +138,7 @@ void compressors__kosinski_decompress(const u8* src, size src_size, u8* dst, siz
         }
     }
 }
+
+void compressors__kosinski_decompress_byte_arr(const ReadonlyByteArray* src, const MutableByteArray* dst) {
+    compressors__kosinski_decompress(src->arr, src->size, dst->arr, dst->size);
+}

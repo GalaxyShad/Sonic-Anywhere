@@ -205,3 +205,7 @@ void compressors__nemesis_decompress(const u8* src, size src_size, u8* dst, size
 
     // NOT_IMPLEMENTED;
 }
+
+void compressors__nemesis_decompress_byte_arr(const ReadonlyByteArray* src, const MutableByteArray* dst) {
+    compressors__nemesis_decompress(src->arr, src->size, dst->arr, dst->size);
+}

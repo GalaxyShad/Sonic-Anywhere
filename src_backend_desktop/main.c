@@ -17,9 +17,9 @@ int main(int argc, char* args[]) {
 
     pthread_create(&game_thread, NULL, game_thread__, (void*)NULL);
 
-    vdp__init();
+    md_vdp__init();
     while (1) {
-        vdp__render();
+        md_vdp__render();
     }
 }
 

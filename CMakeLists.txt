@@ -33,6 +33,7 @@ add_executable(sonic_anywhere
         config/config.h
         include_backend/macroutils.h
         src/gamevdp.vblankinterrupts.c
+        src/bytearray.c
 )
 
 target_include_directories(sonic_anywhere PRIVATE ${raylib_public_headers})

@@ -182,3 +182,7 @@ void compressors__enigma_decompress(const u8* src, size src_size, u8* dst, size 
         }
     }
 }
+
+void compressors__enigma_decompress_byte_arr(const ReadonlyByteArray* src, const MutableByteArray* dst, u16 starting_art_tile) {
+    compressors__enigma_decompress(src->arr, src->size, dst->arr, dst->size, starting_art_tile);
+}
