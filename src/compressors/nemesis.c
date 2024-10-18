@@ -203,5 +203,5 @@ void compressors__nemesis_decompress(const u8* src, size src_size, u8* dst, size
         nybbles_remaining -= run_length;
     }
 
-    // NOT_IMPLEMENTED;
+    // RAISE_NOT_IMPLEMENTED;
 }
