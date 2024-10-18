@@ -22,3 +22,5 @@ SpaceAfterCStyleCast: true
 SpaceAroundPointerQualifiers: Default
 TabWidth: 4
 UseCRLF: false
+BinPackArguments: false
+BinPackParameters: false

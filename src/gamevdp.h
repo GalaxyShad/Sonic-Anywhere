@@ -27,7 +27,9 @@ typedef enum GameVdpPaletteID {
 
     GAME_VDP_PALETTE_ID__SPECIAL_STAGE_RESULTS,
     GAME_VDP_PALETTE_ID__SPECIAL_STAGE_RESULTS_CONTINUE,
-    GAME_VDP_PALETTE_ID__ENDING_SEQUENCE
+    GAME_VDP_PALETTE_ID__ENDING_SEQUENCE,
+
+    GAME_VDP_PALETTE_ID__SIZE__,    // Just to determine size of Enum
 } GameVdpPaletteID;
 
 void game_vdp__load_palette(GameVdpPaletteID pal_id);
@@ -47,6 +49,8 @@ typedef enum GameVdpPaletteLayerID {
 void game_vdp__palette_foreach(GameVdpPaletteLayerID pal_id, MDColor (*func)(MDColor));
 
 void game_vdp__palette_set_color(u8 index, MDColor color);
+
+void game_vdp__palette_copy_to_vdp();
 
 // same as -> move.b $14,(v_vbla_routine).w
 void game_vdp__set_vblank_routine_counter(u8 routine);

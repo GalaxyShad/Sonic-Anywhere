@@ -21,16 +21,18 @@ add_executable(sonic_anywhere
         src_backend_desktop/audio.c
         src_backend_desktop/debug.c
         src_backend_desktop/input.c
-        src_backend_desktop/plc.c
-        src_backend_desktop/vpu.c
+        src/plc.c
+        src_backend_desktop/vdp.c
         src_backend_desktop/mdcolor.c
         src/gamevdp.h
         src/gamevdp.c
-        include_backend/mem.h
+        include_backend/mdmem.h
         src_backend_desktop/mem.c
-        include_backend/system.h
+        include_backend/mdsystem.h
         src_backend_desktop/system.c
         config/config.h
+        include_backend/macroutils.h
+        src/gamevdp.vblankinterrupts.c
 )
 
 target_include_directories(sonic_anywhere PRIVATE ${raylib_public_headers})
