@@ -29,8 +29,12 @@ const MdMemory* md_mem() {
     static u8 chunks[0x52 * 0x200];
     static MutableByteArray byte_arr_chunks = {chunks, 0x52 * 0x200};
 
+    static u8 tiles[0x1800];
+    static MutableByteArray byte_arr_tiles = { tiles, 0x1800  };
+
     static const MdMemory mem = {
-      &byte_arr_chunks
+      &byte_arr_chunks,
+      &byte_arr_tiles
     };
 
     return &mem;

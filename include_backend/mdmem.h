@@ -18,6 +18,7 @@ const MdMemoryVram* md_mem__vram();
 
 typedef struct MdMemory {
     const MutableByteArray* chunks_mut; // 256x256 tile mappings ($52 chunks)
+    const MutableByteArray* tiles_mut;  // 16x16 tile mappings
 } MdMemory;
 
 const MdMemory* md_mem();

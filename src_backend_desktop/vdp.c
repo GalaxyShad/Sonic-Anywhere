@@ -275,3 +275,11 @@ void md_vdp__render() {
 
     game_vdp__on_vblank_interrupt();
 }
+void md_vdp__set_plane_size(MdVdpPlaneSize cells_width, MdVdpPlaneSize cells_height) {
+    ASSERT(cells_height != MD_VDP_PLANE_SIZE__INVALID && cells_width != MD_VDP_PLANE_SIZE__INVALID)
+    ASSERT(!(cells_height == MD_VDP_PLANE_SIZE__128_CELLS && cells_width == MD_VDP_PLANE_SIZE__128_CELLS))
+    ASSERT(!(cells_height == MD_VDP_PLANE_SIZE__64_CELLS && cells_width == MD_VDP_PLANE_SIZE__128_CELLS))
+    ASSERT(!(cells_height == MD_VDP_PLANE_SIZE__128_CELLS && cells_width == MD_VDP_PLANE_SIZE__64_CELLS))
+
+    NOT_IMPLEMENTED
+}

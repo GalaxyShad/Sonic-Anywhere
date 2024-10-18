@@ -54,4 +54,31 @@ typedef enum MdVdpRamAccessMode {
 void md_vdp__set_ram_address(MdVdpRamAccessMode access_mode, u16 adr, bool vram_to_vram_copy, bool dma);
 
 
+typedef enum MdVdpPlaneSize {
+    MD_VDP_PLANE_SIZE__32_CELLS, // 256 pixels
+    MD_VDP_PLANE_SIZE__64_CELLS, // 512 pixels
+    MD_VDP_PLANE_SIZE__INVALID,
+    MD_VDP_PLANE_SIZE__128_CELLS, // 1024 pixels
+} MdVdpPlaneSize;
+
+// reg 0x10
+// Plane Size
+// move.w #$90xx,($c00004).l
+void md_vdp__set_plane_size(MdVdpPlaneSize cells_height, MdVdpPlaneSize cells_width);
+
+typedef enum MdVdpWindowDirection {
+    MD_VDP_WINDOW_POSITION__FROM_BACK_TO_FRONT,
+    MD_VDP_WINDOW_POSITION__FROM_FRONT_TO_BACK,
+} MdVdpWindowDirection;
+
+// reg 0x11
+// Window Plane Horizontal Position
+// move.w #$91xx,($c00004).l
+void md_vdp__set_window_horizontal_position(MdVdpWindowDirection dir, u8 units);
+
+// reg 0x12
+// Window Plane Vertical Position
+// move.w #$92xx,($c00004).l
+void md_vdp__set_window_vertical_position(MdVdpWindowDirection dir, u8 units);
+
 #endif // SONIC_ANYWHERE_MDVDP_H
