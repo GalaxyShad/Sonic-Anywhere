@@ -44,7 +44,7 @@ static i16 v_pcyc_num = 0;
 static u16 palette_cycle_sega_stripe__() {
     u16 pal_shift = 0x20;
     // a0
-    ReadonlyByteArray pal_sega1 = resource_store__get(RESOURCE__PALETTE__SEGA1_BIN);
+    ReadonlyByteArray pal_sega1 = s_resource(RESOURCE__PALETTE__SEGA1_BIN);
     const u8* pal_sega_ptr = pal_sega1.arr;
 
     i16 d1 = 5;
@@ -126,7 +126,7 @@ static u16 palette_cycle_sega__() {
         v_pcyc_num = d0;
 
         // a0
-        const u8* pal_sega_2 = resource_store__get(RESOURCE__PALETTE__SEGA2_BIN).arr;
+        const u8* pal_sega_2 = s_resource(RESOURCE__PALETTE__SEGA2_BIN).arr;
         pal_sega_2 += d0;
 
         // a1
@@ -198,12 +198,12 @@ void game_mode_sega() {
       md_system__is_region_japan() ? RESOURCE__ARTNEM__SEGA_LOGO_JP1_NEM : RESOURCE__ARTNEM__SEGA_LOGO_NEM;
 
     // ---- Load Sega logo patterns ---- //
-    ReadonlyByteArray sega_logo_patterns_nem = resource_store__get(patterns_sega_logo_id);
+    ReadonlyByteArray sega_logo_patterns_nem = s_resource(patterns_sega_logo_id);
     compressors__nemesis_decompress_byte_arr(&sega_logo_patterns_nem, md_mem__vram()->plane_window_mut);
 
     // ---- Load Sega logo mappings ---- //
     md_vdp__set_name_table_location_for_plane(MD_VDP_PLANE__WINDOW, md_mem__vram()->plane_window_mut);
-    ReadonlyByteArray sega_logo_mappings = resource_store__get(tilemap_sega_logo_id);
+    ReadonlyByteArray sega_logo_mappings = s_resource(tilemap_sega_logo_id);
     compressors__enigma_decompress_byte_arr(&sega_logo_mappings, md_mem()->chunks_mut, 0);
 
     // ---- Copy to display ---- //

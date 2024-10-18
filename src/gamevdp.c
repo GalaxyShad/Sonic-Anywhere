@@ -41,7 +41,7 @@ void game_vdp__load_palette(GameVdpPaletteID pal_id) {
     }
     // clang-format on
 
-    ReadonlyByteArray res = resource_store__get(res_id);
+    ReadonlyByteArray res = s_resource(res_id);
 
     for (int i = 0; i < res.size / 2; i++) {
         MDColor color = res.arr[i * 2];

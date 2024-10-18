@@ -283,3 +283,5 @@ void md_vdp__set_plane_size(MdVdpPlaneSize cells_width, MdVdpPlaneSize cells_hei
 
     NOT_IMPLEMENTED
 }
+void md_vdp__set_window_horizontal_position(MdVdpWindowDirection dir, u8 units) { NOT_IMPLEMENTED}
+void md_vdp__set_window_vertical_position(MdVdpWindowDirection dir, u8 units) { NOT_IMPLEMENTED }

@@ -4,7 +4,7 @@
 
 #include "src_s1disasm_assets/index.h"
 
-ReadonlyByteArray resource_store__get(ResourceID res_id) {
+ReadonlyByteArray s_resource(ResourceID res_id) {
 #define $MAP(X)                          \
     (ReadonlyByteArray) {             \
         X, (sizeof(X) / sizeof(X[0])) \

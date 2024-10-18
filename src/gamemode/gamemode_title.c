@@ -32,12 +32,12 @@ static void clear_object_space__() {
 }
 
 static void load_nemesis_art_to_vram__(ResourceID res_id) {
-    ReadonlyByteArray res = resource_store__get(res_id);
+    ReadonlyByteArray res = s_resource(res_id);
     compressors__nemesis_decompress_byte_arr(&res, md_mem__vram()->plane_window_mut);
 }
 
 static void load_level_select_font__() {
-    ReadonlyByteArray font_art = resource_store__get(RESOURCE__MISC__LEVEL_SELECT_TEXT_BIN);
+    ReadonlyByteArray font_art = s_resource(RESOURCE__MISC__LEVEL_SELECT_TEXT_BIN);
 
 //     	lea	(vdp_data_port).l,a6
     //		locVRAM	vram_text,4(a6)
@@ -70,7 +70,7 @@ void game_mode_title() {
     load_nemesis_art_to_vram__(RESOURCE__ARTNEM__ENDING_CREDITS_NEM);
 
     // Load mappings for Japanese credits
-    ReadonlyByteArray  jp_credits_mappings = resource_store__get(RESOURCE__TILEMAPS__HIDDEN_JAPANESE_CREDITS_ENI);
+    ReadonlyByteArray  jp_credits_mappings = s_resource(RESOURCE__TILEMAPS__HIDDEN_JAPANESE_CREDITS_ENI);
     compressors__enigma_decompress_byte_arr(&jp_credits_mappings, md_mem()->chunks_mut, 0);
 
     md_vdp__copy_tilemap_to_plane_r(MD_VDP_PLANE__FOREGROUND, 0, 0, (ReadonlyByteArray*)md_mem()->chunks_mut, 0x28, 0x1C);
@@ -101,11 +101,11 @@ void game_mode_title() {
     //		move.w	#0,(v_palcycle_time).w			; disable palette cycling
 
     // Load GHZ 16x16 mappings
-    ReadonlyByteArray blk_16_ghz = resource_store__get(RESOURCE__MAP16__GHZ_ENI);
+    ReadonlyByteArray blk_16_ghz = s_resource(RESOURCE__MAP16__GHZ_ENI);
     compressors__enigma_decompress_byte_arr(&blk_16_ghz, md_mem()->tiles_mut, 0);
 
     // Load GHZ 256x256 mappings
-    ReadonlyByteArray blk_256_ghz = resource_store__get(RESOURCE__MAP256__GHZ_KOS);
+    ReadonlyByteArray blk_256_ghz = s_resource(RESOURCE__MAP256__GHZ_KOS);
     compressors__kosinski_decompress_byte_arr(&blk_256_ghz, md_mem()->chunks_mut);
 
     // bsr.w	LevelLayoutLoad				; load GHZ1 level layout including background
@@ -122,7 +122,7 @@ void game_mode_title() {
     //		bsr.w	DrawChunks				; draw background
 
     // Load title screen mappings
-    ReadonlyByteArray title_mappings = resource_store__get(RESOURCE__TILEMAPS__TITLE_SCREEN_ENI);
+    ReadonlyByteArray title_mappings = s_resource(RESOURCE__TILEMAPS__TITLE_SCREEN_ENI);
     compressors__enigma_decompress_byte_arr(&title_mappings, md_mem()->chunks_mut, 0);
 
     md_vdp__copy_tilemap_to_plane_r(MD_VDP_PLANE__FOREGROUND, 3, 4, (ReadonlyByteArray*)md_mem()->chunks_mut, 0x22, 0x16);
