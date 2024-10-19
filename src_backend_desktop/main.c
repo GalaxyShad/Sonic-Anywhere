@@ -8,7 +8,7 @@ void* game_thread__(void *ptr) {
    return 0;
 }
 
-#ifndef _WINDOWS
+#ifndef _WIN32
 
 #include <pthread.h>
 
