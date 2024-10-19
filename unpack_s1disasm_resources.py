@@ -21,8 +21,7 @@ def get_list_files(path_file, folders=None):
 
     return list_file
 
-
-def ext_to_h(file_path):
+def creation_of_file_h_from_any_etension(file_path):
     orig_path = file_path
     file_path, file_tail = os.path.split(orig_path)
     file_name, file_ext = os.path.splitext(file_tail)
@@ -30,7 +29,7 @@ def ext_to_h(file_path):
     file_name_lower = re.sub(r'[ ]', '_', re.sub(r'( -| &|\(|\)|\-)', '', file_name.lower()))
     file_name_upper = file_name_lower.upper()
 
-    if (os.path.isdir(file_path) == False):
+    if not os.path.isdir(file_path):
         os.makedirs(file_path)
 
     read_file_name = os.path.join('../s1disasm', orig_path[2:])
@@ -53,6 +52,102 @@ def ext_to_h(file_path):
         file.write(text_hex)
         file.write(write_end)
 
+def generate_index_h(file_list):
+    with open('index.h', "w+") as file:
+        for path in file_list:
+            file_path, file_tail = os.path.split(path)
+            file_name_lower = re.sub(r'[ .]', '_', re.sub(r'( -| &|\(|\)|\-)', '', file_tail.lower()))
+            write_middle = (
+                '#include \"' + ((os.path.join(file_path, (file_name_lower + '.h')))[2:]).replace('\\', '/') + '\"'
+                )
+            file.write(write_middle + '\n')
+
+def generate_resourcemap_h(file_list, check_sum=0):    
+    write_begin = (
+        '#ifndef SONIC_ANYWHERE_TESTS_RESOURCEMAP_H\n' +
+        '#define SONIC_ANYWHERE_TESTS_RESOURCEMAP_H\n\n' +
+        'typedef enum ResourceID {\n'
+        )
+    write_end = (
+        '} ResourceID;\n' +
+        '#define RESOURCE_COUNT ' + str(len(file_list)) + '\n'+
+        '#define RESOURCE_CHECK_SUM ' + str(check_sum) + '\n\n' +
+        '#endif // SONIC_ANYWHERE_TESTS_RESOURCEMAP_H\n'
+        )
+
+    with open('resourcemap.h', "w+") as file:
+        file.write(write_begin)
+        for path in file_list:
+            file_path, file_tail = os.path.split(path)
+            file_name_upper = re.sub(r'[ .]', '_', re.sub(r'( -| &|\(|\)|\-)', '', file_tail.upper()))
+            write_middle = (
+                '\tRESOURCE__' + ((os.path.basename(file_path).upper()) + '__' + file_name_upper).replace('\\', '/')
+                )
+            file.write(write_middle + ',\n')
+        file.write(write_end)
+
+def generate_resourceid_h(file_list,check_sum):
+    write_begin = (
+        '#ifndef SONIC_ANYWHERE_RESOURCEID_H\n' +
+        '#define SONIC_ANYWHERE_RESOURCEID_H\n\n' +
+        'typedef enum ResourceID {\n'
+        )
+    write_end = (
+        '} ResourceID;\n' +
+        '#define RESOURCE_COUNT ' + str(len(file_list)) + '\n'+
+        '#define RESOURCE_CHECK_SUM ' + str(check_sum) + '\n\n' +
+        '#endif // SONIC_ANYWHERE_RESOURCEID_H\n'
+        )
+
+    with open('resourceid.h', "w+") as file:
+        file.write(write_begin)
+        for path in file_list:
+            file_path, file_tail = os.path.split(path)
+            file_name_upper = re.sub(r'[ .]', '_', re.sub(r'( -| &|\(|\)|\-)', '', file_tail.upper()))
+            write_middle = (
+                '\tRESOURCE__' + ((os.path.basename(file_path).upper()) + '__' + file_name_upper).replace('\\', '/')
+                )
+            file.write(write_middle + ',\n')
+        file.write(write_end)
+
+def generate_resourcestore_c(file_list):
+    write_begin = (
+        '#include \"resourcestore.h\"\n' +
+        '#include \"include_backend/debug.h\"\n' +
+        '#include \"src_s1disasm_assets/index.h\"\n\n' +
+        'ReadonlyByteArray s_resource(ResourceID res_id) {\n' +
+        '#define $(X)                      \t\t\\\n' +
+        '\t(ReadonlyByteArray) {           \t\\\n' +
+        '\t\tX, (sizeof(X) / sizeof(X[0])) \t\\\n' +
+        '\t}\n\n' +
+        '\t// clang-format off\n' +
+        '\tswitch (res_id) {\n'
+        )
+    write_end = (
+        '\tdefault:\n' +                                                                         
+        '\t\tLOG_ERROR("[Resource Store] No res_id DEC: %d HEX: 0x%04X implemented", res_id, res_id)\n' +
+        '\t\treturn $(S1DISASM__PALETTE__SEGA1_BIN_BODY);\n' +
+        '\t}\n' +
+        '\t// clang-format on\n' +
+        '#undef $ //(X)\n' +
+        '}'
+        )
+
+    with open('resourcestore.c', "w+") as file:
+        file.write(write_begin)
+        for path in file_list:
+            file_path, file_tail = os.path.split(path)
+            file_name_upper = re.sub(r'[ .]', '_', re.sub(r'( -| &|\(|\)|\-)', '', file_tail.upper()))
+            write_middle = (
+                '\tcase RESOURCE__' + ((os.path.basename(file_path).upper()) + '__' + file_name_upper).replace('\\', '/') +
+                ': return $(S1DISASM__' + ((os.path.basename(file_path).upper()) + '__' + file_name_upper).replace('\\', '/') + '_BODY);'
+                )
+            file.write(write_middle + '\n')
+        file.write(write_end)
+
+
+
+
 
 if __name__ == '__main__':
     FOLDERS = [
@@ -60,42 +155,32 @@ if __name__ == '__main__':
         'levels', 'map16', 'map256', 'misc', 'objpos',
         'palette', 'sslayout', 'startpos', 'tilemaps'
     ]
-
+    
     dir = os.path.dirname(sys.argv[0])
-
     os.chdir(os.path.join(dir, 's1disasm'))
-
     file_list = get_list_files('.', FOLDERS)
-
-    if (os.path.isdir('../src_s1disasm_assets') == False):
-        os.makedirs('../src_s1disasm_assets')
-    os.chdir(os.path.join(dir, 'src_s1disasm_assets'))
-
-    for file in file_list:
-        ext_to_h(file)
-
-    with open('index.h', "w+") as file:
-        for path in file_list:
-            file_path, file_tail = os.path.split(path)
-            file_name_lower = re.sub(r'[ .]', '_', re.sub(r'( -| &|\(|\)|\-)', '', file_tail.lower()))
-            include_string = '#include \"' + ((os.path.join(file_path, (file_name_lower + '.h')))[2:]).replace('\\', '/') + '\"'
-            file.write(include_string + '\n')
-
     check_sum = 0
     for file_path in file_list:
         for c in (file_path[2:]):
             check_sum += ord(c)
 
-    name_define = 'SONIC_ANYWHERE_TESTS_RESOURCEMAP_H'
-    write_begin = '#ifndef ' + name_define + '\n#define ' + name_define + '\n\ntypedef enum ResourceID {\n'
-    write_end = '\n} ResourceID;\n#define RESOURCE_COUNT ' + str(len(file_list)) + '\n#define RESOURCE_CHECK_SUM ' + str(
-        check_sum) + '\n\n#endif // ' + name_define + '\n'
+    # change directory to ./src_s1disasm_assets
+    if not os.path.isdir('../src_s1disasm_assets'):
+        os.makedirs('../src_s1disasm_assets')
+    os.chdir(os.path.join(dir, 'src_s1disasm_assets'))
 
-    with open('resourcemap.h', "w+") as file:
-        file.write(write_begin)
-        for path in file_list:
-            file_path, file_tail = os.path.split(path)
-            file_name_upper = re.sub(r'[ .]', '_', re.sub(r'( -| &|\(|\)|\-)', '', file_tail.upper()))
-            resurs_string = '\tRESOURCE__' + ((os.path.basename(file_path).upper()) + '__' + file_name_upper).replace('\\', '/')
-            file.write(resurs_string + ',\n')
-        file.write(write_end)
+    # generate _.h files from _.* files
+    for file in file_list:
+        creation_of_file_h_from_any_etension(file)
+
+    # generate assets in ./src_s1disasm_assets
+    generate_index_h(file_list)
+    generate_resourcemap_h(file_list,check_sum)
+
+    # change directory to ./src/resources
+    dir = os.path.dirname(sys.argv[0])
+    os.chdir(os.path.join(dir, 'src/resources'))    
+
+    # generate resource in ./src/resources
+    generate_resourceid_h(file_list,check_sum)
+    generate_resourcestore_c(file_list)
