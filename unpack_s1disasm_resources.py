@@ -5,7 +5,6 @@ import os
 import sys
 import re
 
-
 def get_list_files(path_file, folders=None):
     if folders is None:
         folders = []
@@ -21,7 +20,6 @@ def get_list_files(path_file, folders=None):
 
     return list_file
 
-
 def ext_to_h(file_path):
     orig_path = file_path
     file_path, file_tail = os.path.split(orig_path)
@@ -30,13 +28,12 @@ def ext_to_h(file_path):
     file_name_lower = re.sub(r'[ ]', '_', re.sub(r'( -| &|\(|\)|\-)', '', file_name.lower()))
     file_name_upper = file_name_lower.upper()
 
-    if (os.path.isdir(file_path) == False):
+    if not os.path.isdir(file_path):
         os.makedirs(file_path)
 
     read_file_name = os.path.join('../s1disasm', orig_path[2:])
     write_file_name = os.path.join(file_path, (file_name_lower + '_' + file_ext[1:] + '.h'))
 
-    text_bin = []
     with open(read_file_name, "rb") as file:
         text_bin = file.read()
 
@@ -53,7 +50,6 @@ def ext_to_h(file_path):
         file.write(text_hex)
         file.write(write_end)
 
-
 if __name__ == '__main__':
     FOLDERS = [
         'artkos', 'artnem', 'artunc', 'collide', 'demodata',
@@ -67,9 +63,11 @@ if __name__ == '__main__':
 
     file_list = get_list_files('.', FOLDERS)
 
-    if (os.path.isdir('../src_s1disasm_assets') == False):
+    if not os.path.isdir('../src_s1disasm_assets'):
         os.makedirs('../src_s1disasm_assets')
-    os.chdir(os.path.join(dir, 'src_s1disasm_assets'))
+    os.chdir(os.path.join(dir, 'C:/gitProjects/Sonic-Anywhere/src_s1disasm_assets'))
+
+    resource_mappings = []
 
     for file in file_list:
         ext_to_h(file)
@@ -78,7 +76,7 @@ if __name__ == '__main__':
         for path in file_list:
             file_path, file_tail = os.path.split(path)
             file_name_lower = re.sub(r'[ .]', '_', re.sub(r'( -| &|\(|\)|\-)', '', file_tail.lower()))
-            include_string = '#include \"' + ((os.path.join(file_path, (file_name_lower + '.h')))[2:]).replace('\\', '/') + '\"'
+            include_string = '#include \"' + ((os.path.join(file_path, (file_name_lower + '_' + os.path.splitext(file_tail)[1][1:] + '.h')))[2:]).replace('\\', '/') + '\"'
             file.write(include_string + '\n')
 
     check_sum = 0
@@ -96,6 +94,59 @@ if __name__ == '__main__':
         for path in file_list:
             file_path, file_tail = os.path.split(path)
             file_name_upper = re.sub(r'[ .]', '_', re.sub(r'( -| &|\(|\)|\-)', '', file_tail.upper()))
-            resurs_string = '\tRESOURCE__' + ((os.path.basename(file_path).upper()) + '__' + file_name_upper).replace('\\', '/')
+            resource_id = 'RESOURCE__' + ((os.path.basename(file_path).upper()) + '__' + file_name_upper).replace('\\', '/')
+            resurs_string = '\t' + resource_id
             file.write(resurs_string + ',\n')
+
+            # Генерация имени тела ресурса
+            file_name, file_ext = os.path.splitext(file_tail)
+            file_ext_upper = file_ext.upper()[1:]
+            resource_body_name = 'S1DISASM__' + os.path.basename(file_path).upper() + '__' + file_name_upper + '_' + file_ext_upper + '_BODY'
+
+            # Добавляем в список сопоставлений
+            resource_mappings.append((resource_id, resource_body_name))
         file.write(write_end)
+
+    # Генерация файла resourcestore.c
+    RESOURCESTORE_C_PATH = '../src/resources/resourcestore.c'
+
+    if not os.path.isdir(os.path.dirname(RESOURCESTORE_C_PATH)):
+        os.makedirs(os.path.dirname(RESOURCESTORE_C_PATH))
+
+    with open(RESOURCESTORE_C_PATH, 'w') as file:
+        # Запись включений
+        file.write('#include "resourcestore.h"\n')
+        file.write('#include "include_backend/debug.h"\n')
+        file.write('#include "src_s1disasm_assets/index.h"\n\n')
+
+        # Определение функции
+        file.write('ReadonlyByteArray resource_store__get(ResourceID res_id) {\n')
+
+        # Макрос
+        file.write('#define $(X)                          \\\n')
+        file.write('    (ReadonlyByteArray) {             \\\n')
+        file.write('        X, (sizeof(X) / sizeof(X[0])) \\\n')
+        file.write('    }\n\n')
+
+        # Начало switch
+        file.write('    // clang-format off\n')
+        file.write('    switch (res_id) {\n')
+
+        # Генерация case для каждого ресурса
+        for resource_id, resource_body_name in resource_mappings:
+            file.write('    case {}: return $({});\n'.format(resource_id, resource_body_name))
+
+        # Default case
+        file.write('    default:\n')
+        file.write('        LOG_ERROR("[Resource Store] No res_id DEC: %d HEX: 0x%04X implemented", res_id, res_id);\n')
+        if resource_mappings:
+            default_resource_body_name = resource_mappings[0][1]
+        else:
+            default_resource_body_name = 'NULL'
+        file.write('        return $({});\n'.format(default_resource_body_name))
+        file.write('    }\n')
+        file.write('    // clang-format on\n\n')
+
+        # Отмена определения макроса и закрытие функции
+        file.write('#undef $ //(X)\n')
+        file.write('}\n')
