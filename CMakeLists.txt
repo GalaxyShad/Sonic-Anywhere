@@ -35,6 +35,10 @@ add_executable(sonic_anywhere
         src/gamevdp.vblankinterrupts.c
         src/bytearray.c
         src/gamemode/gamemode_title.c
+        src/objects.c
+        src/objects.h
+        src/object_map.h
+        src/objects/obj_sonic_team_8a.c
 )
 
 target_include_directories(sonic_anywhere PRIVATE ${raylib_public_headers})

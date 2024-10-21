@@ -9,6 +9,7 @@
 #include "src/resources/resourcestore.h"
 #include "src/compressors.h"
 #include "src/gamevdp.h"
+#include "src/objects.h"
 
 static u16 countdown__ = 0;
 
@@ -20,15 +21,6 @@ static void setup_vdp__() {
     md_vdp__set_window_vertical_position(MD_VDP_WINDOW_POSITION__FROM_BACK_TO_FRONT, 0);
     md_vdp__set_scrolling_mode(MD_VDP_VSCROLL_MODE__FULL_SCROLL, MD_VDP_HSCROLL_MODE__EACH_1_LINE, 0);
     md_vdp__set_background_color(2, 0);
-}
-
-static void clear_object_space__() {
-    // 		lea	(v_ost_all).w,a1			; RAM address to start clearing
-    //		moveq	#0,d0
-    //		move.w	#loops_to_clear_ost,d1			; size of RAM block to clear
-    //	.clear_ost:
-    //		move.l	d0,(a1)+
-    //		dbf	d1,.clear_ost				; fill OST ($D000-$EFFF) with 0
 }
 
 static void load_nemesis_art_to_vram__(ResourceID res_id) {
@@ -61,7 +53,7 @@ void game_mode_title() {
     // clr.b	(f_water_pal_full).w
     // bsr.w	ClearScreen
 
-    clear_object_space__();
+    s_object_pool__all_clear_props();
 
     // Load Japanese credits
     load_nemesis_art_to_vram__(RESOURCE__ARTNEM__HIDDEN_JAPANESE_CREDITS_NEM);
