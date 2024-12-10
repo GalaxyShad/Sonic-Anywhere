@@ -10,6 +10,7 @@
 #include "src/compressors.h"
 #include "src/gamevdp.h"
 #include "src/objects.h"
+#include "src/object_map.h"
 
 static u16 countdown__ = 0;
 
@@ -26,6 +27,7 @@ static void setup_vdp__() {
 static void load_nemesis_art_to_vram__(ResourceID res_id) {
     ReadonlyByteArray res = s_resource(res_id);
     compressors__nemesis_decompress_byte_arr(&res, md_mem__vram()->plane_window_mut);
+    md_vdp__set_name_table_location_for_plane(MD_VDP_PLANE__WINDOW, md_mem__vram()->plane_window_mut); // FIXME temp solution to update VDP, cuz there is no DMA
 }
 
 static void load_level_select_font__() {
@@ -56,13 +58,13 @@ void game_mode_title() {
     s_object_pool__all_clear_props();
 
     // Load Japanese credits
-    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__HIDDEN_JAPANESE_CREDITS_NEM);
+    //load_nemesis_art_to_vram__(RESOURCE__ARTNEM__HIDDEN_JAPANESE_CREDITS_NEM);
 
     // Load alphabet
     load_nemesis_art_to_vram__(RESOURCE__ARTNEM__ENDING_CREDITS_NEM);
 
     // Load mappings for Japanese credits
-    ReadonlyByteArray  jp_credits_mappings = s_resource(RESOURCE__TILEMAPS__HIDDEN_JAPANESE_CREDITS_ENI);
+    ReadonlyByteArray jp_credits_mappings = s_resource(RESOURCE__TILEMAPS__HIDDEN_JAPANESE_CREDITS_ENI);
     compressors__enigma_decompress_byte_arr(&jp_credits_mappings, md_mem()->chunks_mut, 0);
 
     md_vdp__copy_tilemap_to_plane_r(MD_VDP_PLANE__FOREGROUND, 0, 0, (ReadonlyByteArray*)md_mem()->chunks_mut, 0x28, 0x1C);
@@ -72,10 +74,16 @@ void game_mode_title() {
     game_vdp__load_palette(GAME_VDP_PALETTE_ID__SONIC);
 
     // bsr.w	PalLoad_Fade
-    //		move.b	#id_CreditsText,(v_sonicteam).w ; load "SONIC TEAM PRESENTS" object
-    //		jsr	(ExecuteObjects).l
+    s_object_pool__load(S_OBJECT_ID__CREDITS_TEXT, 2); // load "SONIC TEAM PRESENTS" object
+    s_object_pool__all_execute();
+
     //		jsr	(BuildSprites).l
     //		bsr.w	PaletteFadeIn
+
+    while (1) {
+        game_vdp__set_vblank_routine_counter(4);
+        game_vdp__wait_for_vblank();
+    }
 
     DISABLE_INTERRUPTS()
 

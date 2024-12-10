@@ -2,8 +2,7 @@
 #define SONIC_ANYWHERE_OBJECTS_H
 
 #include "include_backend/tinyint.h"
-
-typedef void* SObjectMappings;
+#include "mappings/sprite_piece.h"
 
 typedef struct {
     u8 x_flip : 1;
@@ -17,14 +16,20 @@ typedef struct {
     u8 is_on_screen : 1; // object is on screen
 } SObjectRender;
 
+//typedef struct {
+//    u16 x_flip : 1;
+//    u16 y_flip : 1;
+//    u16 pal_1 : 2;
+//    u16 pal_2 : 2;
+//    u16 pal_3 : 2;
+//    u16 pal_4 : 2;
+//    u16 priority : 1;
+//} SObjectGfx;
+
 typedef struct {
-    u16 x_flip : 1;
-    u16 y_flip : 1;
-    u16 pal_1 : 2;
-    u16 pal_2 : 2;
-    u16 pal_3 : 2;
-    u16 pal_4 : 2;
-    u16 priority : 1;
+    u16 art_tile_location;
+    u8 pal;
+    u8 priority;
 } SObjectGfx;
 
 typedef union {
@@ -64,7 +69,7 @@ typedef struct {
     u8 id;
     SObjectRender render;
     SObjectGfx gfx;
-    SObjectMappings mappings;
+    GameSpriteMapping* mapping;
     u16 screen_y; // original ROM sometimes using least 2 bytes of x axis (sub_px)
     SObjectAxis x;
     SObjectAxis y;
@@ -85,12 +90,12 @@ typedef struct {
     u8 routine_number;
 } SObjectProps;
 
-typedef struct {
-    void (*routine)(SObjectProps*);
-    u8 props_space_id;
-} SObject;
 
 // ExecuteObjects:
+typedef enum SObjectID SObjectID;
+
+void s_object_pool__load(SObjectID object_id, int object_space);
+
 void s_object_pool__all_execute();
 
 void s_object_pool__all_clear_props();

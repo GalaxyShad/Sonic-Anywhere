@@ -257,5 +257,7 @@ void game_mode_sega() {
             game__load_game_mode(GM_TITLE);
             return;
         }
+
+        demo_length--;
     }
 }

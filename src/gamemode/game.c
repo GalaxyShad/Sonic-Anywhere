@@ -27,9 +27,12 @@ void game__init() {
     // TODO	JoypadInit
 
     game__load_game_mode(GM_SEGA);
+//    game__load_game_mode(GM_TITLE);
     while (1) {
         if (game_mode__ == GM_SEGA)
             game_mode_sega();
+        if (game_mode__ == GM_TITLE)
+            game_mode_title();
         else
             return;
     }

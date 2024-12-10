@@ -3,12 +3,16 @@
 #include "src/gamemode/game.h"
 
 #include "include_backend/debug.h"
+#include "src/resources/resourcestore.h"
 
 #define ROUTINE_MAIN 0
 #define ROUTINE_DISPLAY 2
 
 #define SCREEN_LEFT 128
 #define SCREEN_TOP 128
+
+#define ArtTile_Credits_Font 0x5A0
+#define ArtTile_Sonic_Team_Font 0x0A6
 
 static u16 credits_num__ = 0;
 
@@ -20,8 +24,12 @@ static void main__(SObjectProps* p) {
     p->x.px = SCREEN_LEFT + 160;
     p->screen_y = SCREEN_TOP + 112;
 
-    // TODO p->gfx / tile
-    // move.l	#Map_Cred,ost_mappings(a0)
+    p->mapping = s1_sprite_mapping(S1_SPRITE_MAPPING_TYPE__CREDITS);
+    p->gfx = (SObjectGfx){
+      .art_tile_location = ArtTile_Credits_Font,
+      .pal = 0,
+      .priority = 0
+    };
 
     p->frame = credits_num__;
     p->render.use_abs = 1;
@@ -30,7 +38,11 @@ static void main__(SObjectProps* p) {
     if (game__get_game_mode() != GM_TITLE)
         return display__(p);
 
-    // move.w	#vram_title_credits/sizeof_cell,ost_tile(a0)
+    p->gfx = (SObjectGfx){
+      .art_tile_location = ArtTile_Sonic_Team_Font,
+      .pal = 0,
+      .priority = 0
+    };
 
     p->frame = 0xA; // display "SONIC TEAM PRESENTS"
 

@@ -226,6 +226,17 @@ void md_vdp__init() {
     SetTargetFPS(60);
 }
 
+static void draw_tiles_debug(float x, float y, int in_row_len, float scale) {
+    for (int i = 0; i < vdp_window_tex__.height / 8; i++) {
+        float space = 2;
+
+        float x_ = x + (i % in_row_len) * (8 + space);
+        float y_ = y + (i / in_row_len) * (8 + space);
+
+        DrawTextureRec(vdp_window_tex__, (Rectangle){0, i*8, 8, 8}, (Vector2){x_, y_}, WHITE);
+    }
+}
+
 // Render without interrupts
 void md_vdp__render() {
     int paletteLoc = GetShaderLocation(palette_shader__, "palette");
@@ -253,19 +264,20 @@ void md_vdp__render() {
         is_vdp_window_changed__ = 0;
     }
 
-//    vpu__debug_draw_palette__(palette__, 900, 8);
+    vpu__debug_draw_palette__(palette__, 900, 8);
 
     BeginShaderMode(palette_shader__);
     {
         draw_plane__(&planes__[MD_VDP_PLANE__BACKGROUND], 140, 100, 2);
         draw_plane__(&planes__[MD_VDP_PLANE__FOREGROUND], 140, 100, 2);
-//
-//        draw_plane__(&planes__[MD_VDP_PLANE__BACKGROUND], 800, 100, 1);
-//        draw_plane__(&planes__[MD_VDP_PLANE__FOREGROUND], 800, 100 + 224, 1);
 
-//        if (vdp_window_tex__.id != 0) {
-//            DrawTextureEx(vdp_window_tex__, (Vector2){32, 32}, 0, 3, WHITE);
-//        }
+        draw_plane__(&planes__[MD_VDP_PLANE__BACKGROUND], 800, 100, 1);
+        draw_plane__(&planes__[MD_VDP_PLANE__FOREGROUND], 800, 100 + 224, 1);
+
+        if (vdp_window_tex__.id != 0) {
+            draw_tiles_debug(32, 32, 8, 1);
+//            DrawTextureEx(vdp_window_tex__, (Vector2){32, 32}, 0, 1, WHITE);
+        }
     }
     EndShaderMode();
 
