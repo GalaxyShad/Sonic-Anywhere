@@ -58,7 +58,7 @@ void game_mode_title() {
     s_object_pool__all_clear_props();
 
     // Load Japanese credits
-    //load_nemesis_art_to_vram__(RESOURCE__ARTNEM__HIDDEN_JAPANESE_CREDITS_NEM);
+//    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__HIDDEN_JAPANESE_CREDITS_NEM);
 
     // Load alphabet
     load_nemesis_art_to_vram__(RESOURCE__ARTNEM__ENDING_CREDITS_NEM);
@@ -73,11 +73,43 @@ void game_mode_title() {
 
     game_vdp__load_palette(GAME_VDP_PALETTE_ID__SONIC);
 
+//    const MdMemoryVram* dma = md_vdp__dma_begin();
+//
+//    dma->plane_sprite_mut->arr[0] = 0;
+//    dma->plane_sprite_mut->arr[1] = 32;
+//
+//    dma->plane_sprite_mut->arr[2] = (2 << 2) | 2;
+//    dma->plane_sprite_mut->arr[3] = 1;
+//
+//    dma->plane_sprite_mut->arr[4] = 0;
+//    dma->plane_sprite_mut->arr[5] = 0;
+//
+//    dma->plane_sprite_mut->arr[6] = 0;
+//    dma->plane_sprite_mut->arr[7] = 0;
+//
+//    //
+//
+//    dma->plane_sprite_mut->arr[0+8] = 0;
+//    dma->plane_sprite_mut->arr[1+8] = 32;
+//
+//    dma->plane_sprite_mut->arr[2+8] = (2 << 2) | 2;
+//    dma->plane_sprite_mut->arr[3+8] = 2;
+//
+//    dma->plane_sprite_mut->arr[4+8] = 0;
+//    dma->plane_sprite_mut->arr[5+8] = 4;
+//
+//    dma->plane_sprite_mut->arr[6+8] = 0;
+//    dma->plane_sprite_mut->arr[7+8] = 0+16;
+//
+//    md_vdp__dma_end();
+
+
+
     // bsr.w	PalLoad_Fade
     s_object_pool__load(S_OBJECT_ID__CREDITS_TEXT, 2); // load "SONIC TEAM PRESENTS" object
     s_object_pool__all_execute();
+    s_object_pool__build_sprites();
 
-    //		jsr	(BuildSprites).l
     //		bsr.w	PaletteFadeIn
 
     while (1) {

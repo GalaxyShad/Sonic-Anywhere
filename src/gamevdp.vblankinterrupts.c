@@ -31,6 +31,8 @@ static void vblank_update_palette__() {
     game_vdp__palette_copy_to_vdp();
 }
 
+#include "sprite_buffer.h"
+
 // sub_106E
 static void vblank_update__() {
     // stopZ80
@@ -40,8 +42,8 @@ static void vblank_update__() {
     // ReadJoypads
 
     vblank_update_palette__();
+    s_sprite_buffer__push_to_vram();  //    writeVRAM	v_spritetablebuffer,vram_sprites
 
-    //    writeVRAM	v_spritetablebuffer,vram_sprites
     //    writeVRAM	v_hscrolltablebuffer,vram_hscroll
 
     //    startZ80

@@ -39,11 +39,12 @@ add_executable(sonic_anywhere
         src/objects.h
         src/object_map.h
         src/objects/obj_sonic_team_8a.c
-        src/game_build_sprites.c
         src/mappings/sprite_piece.h
         src/mappings/sprite_mapping_type.h
         src/mappings/credits.c
         src/mappings/sprite_mapping.c
+        src/sprite_buffer.h
+        src/sprite_buffer.c
 )
 
 target_include_directories(sonic_anywhere PRIVATE ${raylib_public_headers})

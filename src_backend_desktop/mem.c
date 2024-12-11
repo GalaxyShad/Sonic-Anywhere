@@ -4,6 +4,7 @@
 
 #define PLANE_SIZE 0x2000
 
+// TODO Remove that
 const MdMemoryVram* md_mem__vram() {
     static u8 fg[PLANE_SIZE];
     static MutableByteArray barr_fg = {fg, PLANE_SIZE};

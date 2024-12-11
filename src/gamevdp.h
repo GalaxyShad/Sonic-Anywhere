@@ -59,6 +59,4 @@ void game_vdp__wait_for_vblank();
 
 void game_vdp__on_vblank_interrupt();
 
-void game_build_sprites();
-
 #endif // SONIC_ANYWHERE_GAMEVDP_H

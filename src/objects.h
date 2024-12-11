@@ -98,6 +98,8 @@ void s_object_pool__load(SObjectID object_id, int object_space);
 
 void s_object_pool__all_execute();
 
+void s_object_pool__build_sprites();
+
 void s_object_pool__all_clear_props();
 
 #endif // SONIC_ANYWHERE_OBJECTS_H

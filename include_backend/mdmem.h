@@ -12,6 +12,7 @@ typedef struct MdMemoryVram {
     const MutableByteArray* plane_foreground_mut;
     const MutableByteArray* plane_background_mut;
     const MutableByteArray* plane_window_mut;
+    const MutableByteArray* plane_sprite_mut;
 } MdMemoryVram;
 
 const MdMemoryVram* md_mem__vram();

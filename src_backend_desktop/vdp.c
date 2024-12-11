@@ -3,11 +3,11 @@
 #include "include_backend/debug.h"
 
 #include "src/gamevdp.h"
-
 static MDColor palette__[4 * 16];
 static u8 palette_bg_index__ = 0;
 
 ////////////////////////////////////////////////////////
+
 
 void md_vdp_palette__load(const ReadonlyByteArray* palette) {
     LOG("called [%s] pal_id = %d", __func__)
@@ -33,15 +33,18 @@ void md_vdp__clear_screen() {
     NOT_IMPLEMENTED
 }
 
-void md_vdp__set_scrolling_mode(MdVdpVScrollMode vertical_mode, MdVdpHScrollMode horizontal_mode, int enable_interrupt) {
+void md_vdp__set_scrolling_mode(
+  MdVdpVScrollMode vertical_mode, MdVdpHScrollMode horizontal_mode, int enable_interrupt
+) {
     LOG(
-      "called [%s] VDP srolling mode set to VScroll = %s, HScroll = %s", __func__,
+      "called [%s] VDP srolling mode set to VScroll = %s, HScroll = %s",
+      __func__,
       (vertical_mode == MD_VDP_VSCROLL_MODE__FULL_SCROLL) ? "MD_VDP_VSCROLL_MODE__FULL_SCROLL"
-                                                       : "MD_VDP_VSCROLL_MODE__EACH_2_CELL",
+                                                          : "MD_VDP_VSCROLL_MODE__EACH_2_CELL",
       (horizontal_mode == MD_VDP_HSCROLL_MODE__FULL_SCROLL)   ? "MD_VDP_HSCROLL_MODE__FULL_SCROLL"
       : (horizontal_mode == MD_VDP_HSCROLL_MODE__PROHIBITED)  ? "MD_VDP_HSCROLL_MODE__PROHIBITED"
       : (horizontal_mode == MD_VDP_HSCROLL_MODE__EACH_1_CELL) ? "MD_VDP_HSCROLL_MODE__EACH_1_CELL"
-                                                           : "MD_VDP_HSCROLL_MODE__EACH_1_LINE"
+                                                              : "MD_VDP_HSCROLL_MODE__EACH_1_LINE"
     )
     NOT_IMPLEMENTED
 }
@@ -64,14 +67,60 @@ typedef struct Plane {
 
 static u8 tiles__[4096 * 16 * 4];
 
+
 static Plane planes__[2] = {};
 
 static u8 cells_hor_count__ = 40;
+static u8 sprite_table__[0x50 * 8] = {0};
 
 
 static Texture2D vdp_window_tex__;
 static Shader palette_shader__;
 static int is_vdp_window_changed__ = 0;
+
+static void vdp__draw_sprites__() {
+    u8 next = 0;
+
+    do {
+        u8* sprite = sprite_table__ + next * 8;
+
+        // VP - Vertical Position
+        // HP - Horizontal Position
+        // HS/VS - Size
+        // PR - Priority
+        // PL - Palette line
+        // VF/HF - Vertical & Horizontal flipping
+        // GFX - Tile number from VRAM. i.e. VRAM address to read graphics data, divided by $20.
+        // NEXT - Next sprite number to jump to. Earlier sprites go on top of later ones. The final sprite must jump to
+        // 0.
+
+        u16 vp = ((sprite[0] & 0b11) << 8) | sprite[1];
+        u8 hs = (sprite[2] >> 2) & 0b11;
+        u8 vs = (sprite[2] >> 0) & 0b11;
+
+        u8 pr = sprite[4] >> 7;
+        u8 pl = (sprite[4] >> 5) & 0b11;
+        u8 vf = (sprite[4] >> 4) & 0b1;
+        u8 hf = (sprite[4] >> 3) & 0b1;
+
+        u16 gfx = ((sprite[4] & 0b111) << 8) | sprite[5];
+        u16 hp = ((sprite[6] & 0b1) << 8) | sprite[7];
+
+        for (int j = 0; j < hs * vs; j++) {
+            int x = j / vs;
+            int y = j % vs;
+
+            int tile_index = gfx + j;
+
+            float scr_x = (float)(hp + x * 8);
+            float scr_y = (float)(vp + y * 8);
+
+            DrawTextureRec(vdp_window_tex__, (Rectangle){pl * 8, tile_index * 8, 8, 8}, (Vector2){scr_x, scr_y}, WHITE);
+        }
+
+        next = sprite[3] & 0b1111111;
+    } while (next != 0);
+}
 
 static void vdp__set_window__(const u8* window, size window_size) {
     int w = 32;
@@ -95,7 +144,10 @@ static void vdp__set_window__(const u8* window, size window_size) {
 
 void md_vdp__set_name_table_location_for_plane(MdVdpPlane plane_id, const MutableByteArray* mem) {
     LOG(
-      "called [%s] VDP Plane [%s] addr set to %p", __func__, (plane_id == MD_VDP_PLANE__BACKGROUND) ? "BG" : "FG", mem->arr
+      "called [%s] VDP Plane [%s] addr set to %p",
+      __func__,
+      (plane_id == MD_VDP_PLANE__BACKGROUND) ? "BG" : "FG",
+      mem->arr
     )
 
     if (plane_id == MD_VDP_PLANE__WINDOW) {
@@ -233,7 +285,7 @@ static void draw_tiles_debug(float x, float y, int in_row_len, float scale) {
         float x_ = x + (i % in_row_len) * (8 + space);
         float y_ = y + (i / in_row_len) * (8 + space);
 
-        DrawTextureRec(vdp_window_tex__, (Rectangle){0, i*8, 8, 8}, (Vector2){x_, y_}, WHITE);
+        DrawTextureRec(vdp_window_tex__, (Rectangle){0, i * 8, 8, 8}, (Vector2){x_, y_}, WHITE);
     }
 }
 
@@ -268,15 +320,17 @@ void md_vdp__render() {
 
     BeginShaderMode(palette_shader__);
     {
-        draw_plane__(&planes__[MD_VDP_PLANE__BACKGROUND], 140, 100, 2);
-        draw_plane__(&planes__[MD_VDP_PLANE__FOREGROUND], 140, 100, 2);
+//        draw_plane__(&planes__[MD_VDP_PLANE__BACKGROUND], 140, 100, 2);
+//        draw_plane__(&planes__[MD_VDP_PLANE__FOREGROUND], 140, 100, 2);
+
+        vdp__draw_sprites__();
 
         draw_plane__(&planes__[MD_VDP_PLANE__BACKGROUND], 800, 100, 1);
         draw_plane__(&planes__[MD_VDP_PLANE__FOREGROUND], 800, 100 + 224, 1);
 
         if (vdp_window_tex__.id != 0) {
-            draw_tiles_debug(32, 32, 8, 1);
-//            DrawTextureEx(vdp_window_tex__, (Vector2){32, 32}, 0, 1, WHITE);
+            draw_tiles_debug(32, 360, 8, 1);
+            //            DrawTextureEx(vdp_window_tex__, (Vector2){32, 32}, 0, 1, WHITE);
         }
     }
     EndShaderMode();
@@ -295,5 +349,30 @@ void md_vdp__set_plane_size(MdVdpPlaneSize cells_width, MdVdpPlaneSize cells_hei
 
     NOT_IMPLEMENTED
 }
-void md_vdp__set_window_horizontal_position(MdVdpWindowDirection dir, u8 units) { NOT_IMPLEMENTED}
-void md_vdp__set_window_vertical_position(MdVdpWindowDirection dir, u8 units) { NOT_IMPLEMENTED }
+void md_vdp__set_window_horizontal_position(MdVdpWindowDirection dir, u8 units) {
+    NOT_IMPLEMENTED
+}
+void md_vdp__set_window_vertical_position(MdVdpWindowDirection dir, u8 units) {
+    NOT_IMPLEMENTED
+}
+
+const MdMemoryVram* md_vdp__dma_begin() {
+    static MutableByteArray n = {0, 0};
+
+    static MutableByteArray s = {sprite_table__, sizeof(sprite_table__) / sizeof (sprite_table__[0])};
+
+    ///////////////////////////////////////////////
+
+    static const MdMemoryVram vram = {
+      &n,
+      &n,
+      &n,
+      .plane_sprite_mut = &s
+    };
+
+    return &vram;
+}
+
+void md_vdp__dma_end() {
+    NOT_IMPLEMENTED
+}

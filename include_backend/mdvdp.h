@@ -2,6 +2,7 @@
 #define SONIC_ANYWHERE_MDVDP_H
 
 #include "../src/bytearray.h"
+#include "mdmem.h"
 #include "mdcolor.h"
 
 void md_vdp__init();
@@ -32,7 +33,8 @@ void md_vdp__set_scrolling_mode(MdVdpVScrollMode vertical_mode, MdVdpHScrollMode
 typedef enum MdVdpPlane {
     MD_VDP_PLANE__FOREGROUND,  // (Plane A)
     MD_VDP_PLANE__BACKGROUND,  // (Plane B)
-    MD_VDP_PLANE__WINDOW
+    MD_VDP_PLANE__WINDOW,
+    MD_VDP_PLANE__SPRITE
 } MdVdpPlane;
 
 void md_vdp__set_name_table_location_for_plane(MdVdpPlane plane_id, const MutableByteArray* mem);
@@ -80,5 +82,10 @@ void md_vdp__set_window_horizontal_position(MdVdpWindowDirection dir, u8 units);
 // Window Plane Vertical Position
 // move.w #$92xx,($c00004).l
 void md_vdp__set_window_vertical_position(MdVdpWindowDirection dir, u8 units);
+
+// DMA (Direct Memory Access) access
+const MdMemoryVram* md_vdp__dma_begin(); // get pointers to VRAM
+void md_vdp__dma_end(); // update internal VDP state after VRAM modification
+
 
 #endif // SONIC_ANYWHERE_MDVDP_H

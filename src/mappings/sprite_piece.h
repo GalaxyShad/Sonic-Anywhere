@@ -5,7 +5,8 @@
 #include "sprite_mapping_type.h"
 
 typedef struct GameSpritePiece {
-    u8 xpos, ypos, width, height, tile, xflip, yflip, pal, pri;
+    i8 xpos, ypos;
+    u8 width, height, tile, xflip, yflip, pal, pri;
 } GameSpritePiece;
 
 typedef struct GameSprite {
