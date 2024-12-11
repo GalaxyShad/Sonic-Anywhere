@@ -45,6 +45,8 @@ add_executable(sonic_anywhere
         src/mappings/sprite_mapping.c
         src/sprite_buffer.h
         src/sprite_buffer.c
+        src/fade.h
+        src/fade.c
 )
 
 target_include_directories(sonic_anywhere PRIVATE ${raylib_public_headers})

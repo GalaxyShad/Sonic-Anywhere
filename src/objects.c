@@ -10,9 +10,9 @@
 
 static SObjectProps object_props_space__[OBJ_PROPS_SIZE];
 
-static void draw_sprite(GameSprite* sprite, i16 x, i16 y, bool flip_x, bool flip_y) {
+static void draw_sprite__(GameSprite* sprite, i16 x, i16 y, u16 tile_shift, bool flip_x, bool flip_y) {
     for (int i = 0; i < sprite->pieces_len; i++) {
-        s_sprite_buffer__add(&sprite->pieces[i], x, y);
+        s_sprite_buffer__add(&sprite->pieces[i], x, y, tile_shift);
     }
 }
 
@@ -36,7 +36,7 @@ void s_object_pool__build_sprites() {
 
         GameSprite* spr = &obj_props->mapping->sprites[obj_props->frame];
 
-        draw_sprite(spr, obj_props->x.px, obj_props->screen_y, 0, 0);
+        draw_sprite__(spr, obj_props->x.px, obj_props->screen_y, obj_props->gfx.art_tile_location, 0, 0);
 //        obj_props->frame
 
         if (sprite_count >= 0x50) {

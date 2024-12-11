@@ -4,7 +4,7 @@
 #include "mappings/sprite_piece.h"
 
 void s_sprite_buffer__reset();
-void s_sprite_buffer__add(const GameSpritePiece* spr, i16 x, i16 y);
+void s_sprite_buffer__add(const GameSpritePiece* spr, i16 x, i16 y, u16 tile_shift);
 
 void s_sprite_buffer__push_to_vram();
 

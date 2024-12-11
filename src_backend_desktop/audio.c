@@ -11,9 +11,10 @@ void md_audio__play_sound_special(MDSoundID snd_id) {
         snd__ = LoadSound("../src_backend_desktop/audio/SEGA.wav");
     }
 
-
     PlaySound(snd__);
 
     LOG("Playing sound id: %02X", snd_id)
+    while (IsSoundPlaying(snd__)) {}
+
     NOT_IMPLEMENTED
 }

@@ -46,7 +46,7 @@ typedef enum GameVdpPaletteLayerID {
     GAME_VDP_PALETTE_LAYER__WATER
 } GameVdpPaletteLayerID;
 
-void game_vdp__palette_foreach(GameVdpPaletteLayerID pal_id, MDColor (*func)(MDColor));
+void game_vdp__palette_foreach(GameVdpPaletteLayerID pal_id, MDColor (*func)(MDColor, MDColor));
 
 void game_vdp__palette_set_color(u8 index, MDColor color);
 
@@ -58,5 +58,7 @@ void game_vdp__set_vblank_routine_counter(u8 routine);
 void game_vdp__wait_for_vblank();
 
 void game_vdp__on_vblank_interrupt();
+
+void game_vdp__clear_screen();
 
 #endif // SONIC_ANYWHERE_GAMEVDP_H

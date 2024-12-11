@@ -16,7 +16,7 @@ void s_sprite_buffer__reset() {
     sprite_count__ = 0;
 }
 
-void s_sprite_buffer__add(const GameSpritePiece* spr, i16 x, i16 y) {
+void s_sprite_buffer__add(const GameSpritePiece* spr, i16 x, i16 y, u16 tile_shift) {
     ASSERT(sprite_count__ < 0x50)
 
     SpriteNode* dst = sprite_list__ + sprite_count__;
@@ -33,7 +33,7 @@ void s_sprite_buffer__add(const GameSpritePiece* spr, i16 x, i16 y) {
     dst->pal = spr->pal;
     dst->pri = spr->pri;
 
-    dst->tile = spr->tile;
+    dst->tile = spr->tile + tile_shift;
 
     sprite_count__++;
 

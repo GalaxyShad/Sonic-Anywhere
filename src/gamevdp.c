@@ -10,8 +10,11 @@
 
 #include "config/config.h"
 
-static MDColor palette__[16 * 4];
-static MDColor palette_water__[16 * 4];
+static MDColor palette__[16 * 4] = {0};
+static MDColor palette_water__[16 * 4] = {0};
+
+static MDColor palette_fade__[16 * 4] = {0};
+static MDColor palette_water_fade__[16 * 4] = {0};
 
 void game_vdp__load_palette(GameVdpPaletteID pal_id) {
     ResourceID res_id;
@@ -47,6 +50,7 @@ void game_vdp__load_palette(GameVdpPaletteID pal_id) {
         MDColor color = res.arr[i * 2];
         color = (color << 8) | res.arr[i * 2 + 1];
         palette__[i] = color;
+        palette_fade__[i] = color;
     }
 }
 
@@ -62,18 +66,33 @@ void game_vdp__palette_copy_to_vdp() {
     );
 }
 
-void game_vdp__palette_foreach(GameVdpPaletteLayerID pal_id, MDColor (*func)(MDColor)) {
+void game_vdp__palette_foreach(GameVdpPaletteLayerID pal_id, MDColor (*func)(MDColor, MDColor)) {
     MDColor* pal = (pal_id == GAME_VDP_PALETTE_LAYER__MAIN) ? palette__ : palette_water__;
+    MDColor* pal_fade = (pal_id == GAME_VDP_PALETTE_LAYER__MAIN) ? palette_fade__ : palette_water_fade__;
 
     for (int i = 0; i < 16 * 4; i++) {
-        pal[i] = func(pal[i]);
+        pal[i] = func(pal[i], pal_fade[i]);
     }
 }
 
 void game_vdp__palette_set_color(u8 index, MDColor color) {
     ASSERT(index >= 0 && index < 16 * 4)
     palette__[index] = color;
+    palette_fade__[index] = color;
 }
 
+void game_vdp__clear_screen() {
+    const MdMemoryVram* vram = md_mem__vram();
+
+    for (int i = 0; i < vram->plane_background_mut->size; i++) {
+        vram->plane_background_mut->arr[i] = 0;
+    }
+
+    for (int i = 0; i < vram->plane_foreground_mut->size; i++) {
+        vram->plane_foreground_mut->arr[i] = 0;
+    }
+
+    md_vdp__set_name_table_location_for_plane(MD_VDP_PLANE__WINDOW, md_mem__vram()->plane_window_mut); // FIXME temp solution to update VDP, cuz there is no DMA
+}
 
 //////////////////////////////////////////////////////////////////////

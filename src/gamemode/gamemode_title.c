@@ -11,6 +11,7 @@
 #include "src/gamevdp.h"
 #include "src/objects.h"
 #include "src/object_map.h"
+#include "src/fade.h"
 
 static u16 countdown__ = 0;
 
@@ -26,7 +27,8 @@ static void setup_vdp__() {
 
 static void load_nemesis_art_to_vram__(ResourceID res_id) {
     ReadonlyByteArray res = s_resource(res_id);
-    compressors__nemesis_decompress_byte_arr(&res, md_mem__vram()->plane_window_mut);
+    MutableByteArray shifted = bytearray__shift_mut(md_mem__vram()->plane_window_mut, 32); //32
+    compressors__nemesis_decompress_byte_arr(&res, &shifted);
     md_vdp__set_name_table_location_for_plane(MD_VDP_PLANE__WINDOW, md_mem__vram()->plane_window_mut); // FIXME temp solution to update VDP, cuz there is no DMA
 }
 
@@ -46,19 +48,20 @@ static void load_level_select_font__() {
 void game_mode_title() {
     md_audio__stop_sounds();
     plc__clear();
-    // PaletteFadeOut
+    s_fade__out();
+
     DISABLE_INTERRUPTS();
     // bsr.w	DACDriverLoad
 
     setup_vdp__();
 
     // clr.b	(f_water_pal_full).w
-    // bsr.w	ClearScreen
+    game_vdp__clear_screen();
 
     s_object_pool__all_clear_props();
 
     // Load Japanese credits
-//    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__HIDDEN_JAPANESE_CREDITS_NEM);
+    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__HIDDEN_JAPANESE_CREDITS_NEM);
 
     // Load alphabet
     load_nemesis_art_to_vram__(RESOURCE__ARTNEM__ENDING_CREDITS_NEM);
@@ -67,61 +70,24 @@ void game_mode_title() {
     ReadonlyByteArray jp_credits_mappings = s_resource(RESOURCE__TILEMAPS__HIDDEN_JAPANESE_CREDITS_ENI);
     compressors__enigma_decompress_byte_arr(&jp_credits_mappings, md_mem()->chunks_mut, 0);
 
-    md_vdp__copy_tilemap_to_plane_r(MD_VDP_PLANE__FOREGROUND, 0, 0, (ReadonlyByteArray*)md_mem()->chunks_mut, 0x28, 0x1C);
+//    md_vdp__copy_tilemap_to_plane_r(MD_VDP_PLANE__FOREGROUND, 0, 0, (ReadonlyByteArray*)md_mem()->chunks_mut, 0x28, 0x1C);
 
     // clearRAM v_palette_fading
 
     game_vdp__load_palette(GAME_VDP_PALETTE_ID__SONIC);
-
-//    const MdMemoryVram* dma = md_vdp__dma_begin();
-//
-//    dma->plane_sprite_mut->arr[0] = 0;
-//    dma->plane_sprite_mut->arr[1] = 32;
-//
-//    dma->plane_sprite_mut->arr[2] = (2 << 2) | 2;
-//    dma->plane_sprite_mut->arr[3] = 1;
-//
-//    dma->plane_sprite_mut->arr[4] = 0;
-//    dma->plane_sprite_mut->arr[5] = 0;
-//
-//    dma->plane_sprite_mut->arr[6] = 0;
-//    dma->plane_sprite_mut->arr[7] = 0;
-//
-//    //
-//
-//    dma->plane_sprite_mut->arr[0+8] = 0;
-//    dma->plane_sprite_mut->arr[1+8] = 32;
-//
-//    dma->plane_sprite_mut->arr[2+8] = (2 << 2) | 2;
-//    dma->plane_sprite_mut->arr[3+8] = 2;
-//
-//    dma->plane_sprite_mut->arr[4+8] = 0;
-//    dma->plane_sprite_mut->arr[5+8] = 4;
-//
-//    dma->plane_sprite_mut->arr[6+8] = 0;
-//    dma->plane_sprite_mut->arr[7+8] = 0+16;
-//
-//    md_vdp__dma_end();
-
-
 
     // bsr.w	PalLoad_Fade
     s_object_pool__load(S_OBJECT_ID__CREDITS_TEXT, 2); // load "SONIC TEAM PRESENTS" object
     s_object_pool__all_execute();
     s_object_pool__build_sprites();
 
-    //		bsr.w	PaletteFadeIn
-
-    while (1) {
-        game_vdp__set_vblank_routine_counter(4);
-        game_vdp__wait_for_vblank();
-    }
+    s_fade__in(); //		bsr.w	PaletteFadeIn
 
     DISABLE_INTERRUPTS()
 
     load_nemesis_art_to_vram__(RESOURCE__ARTNEM__TITLE_SCREEN_FOREGROUND_NEM);
-    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__TITLE_SCREEN_SONIC_NEM);
-    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__TITLE_SCREEN_TM_NEM);
+//    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__TITLE_SCREEN_SONIC_NEM);
+//    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__TITLE_SCREEN_TM_NEM);
 
     load_level_select_font__();
 
@@ -141,7 +107,7 @@ void game_mode_title() {
     compressors__kosinski_decompress_byte_arr(&blk_256_ghz, md_mem()->chunks_mut);
 
     // bsr.w	LevelLayoutLoad				; load GHZ1 level layout including background
-    // bsr.w	PaletteFadeOut				; fade out "SONIC TEAM PRESENTS" screen to black
+    s_fade__out();				// fade out "SONIC TEAM PRESENTS" screen to black
 
     DISABLE_INTERRUPTS()
 
@@ -162,7 +128,7 @@ void game_mode_title() {
     // locVRAM	0
 
     // load GHZ patterns
-    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__8X8_GHZ1_NEM);
+    //load_nemesis_art_to_vram__(RESOURCE__ARTNEM__8X8_GHZ1_NEM);
 
     game_vdp__load_palette(GAME_VDP_PALETTE_ID__TITLE);
     // PalLoad_Next
@@ -208,8 +174,10 @@ void game_mode_title() {
     //		bsr.w	PaletteFadeIn
 
     // Tit_MainLoop:
-    game_vdp__set_vblank_routine_counter(4);
-    game_vdp__wait_for_vblank();
+    while (1) {
+        game_vdp__set_vblank_routine_counter(4);
+        game_vdp__wait_for_vblank();
+    }
 
     // jsr	(ExecuteObjects).l
     //		bsr.w	DeformLayers

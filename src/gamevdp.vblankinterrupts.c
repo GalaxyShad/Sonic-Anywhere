@@ -326,3 +326,4 @@ void game_vdp__wait_for_vblank() {
 void game_vdp__set_vblank_routine_counter(u8 routine) {
     vblank_routine__ = routine;
 }
+

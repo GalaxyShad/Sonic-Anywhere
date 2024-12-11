@@ -14,29 +14,12 @@
 #include "include_backend/debug.h"
 #include "include_backend/mdaudio.h"
 #include "src/gamevdp.h"
+#include "src/fade.h"
 
 // ---------------------------------------------------------------------------
 //  Sega screen
 // ---------------------------------------------------------------------------
 
-
-static void fadeout_to_black__() {
-    //    FadeOut_ToBlack:
-    game_vdp__palette_foreach(GAME_VDP_PALETTE_LAYER__MAIN, mdcolor__fade_black);
-    game_vdp__palette_foreach(GAME_VDP_PALETTE_LAYER__WATER, mdcolor__fade_black);
-}
-
-static void palette_fadeout__() {
-    //    PaletteFadeOut
-    u16 palette_fade_start = 0x003F;
-
-    for (u16 i = 0; i < 0x15; i++) {
-        game_vdp__set_vblank_routine_counter(0x12);
-        game_vdp__wait_for_vblank();
-        fadeout_to_black__();
-        plc__run();
-    }
-}
 
 static i16 v_pcyc_time = 0;
 static i16 v_pcyc_num = 0;
@@ -174,7 +157,7 @@ void game_mode_sega() {
     // GM_Sega
     md_audio__stop_sounds();
     plc__clear();
-    palette_fadeout__();
+    s_fade__out();
 
     md_vdp__set_color_mode(MD_VDP_COLOR_MODE_8_COLOR);
     md_vdp__set_name_table_location_for_plane(MD_VDP_PLANE__FOREGROUND, md_mem__vram()->plane_foreground_mut);

@@ -78,48 +78,54 @@ static Texture2D vdp_window_tex__;
 static Shader palette_shader__;
 static int is_vdp_window_changed__ = 0;
 
-static void vdp__draw_sprites__() {
+static void vdp__draw_sprites__(float x, float y, float scale) {
     u8 next = 0;
 
     do {
+        // https://segaretro.org/Sega_Mega_Drive/Sprites
         u8* sprite = sprite_table__ + next * 8;
 
-        // VP - Vertical Position
-        // HP - Horizontal Position
-        // HS/VS - Size
-        // PR - Priority
-        // PL - Palette line
-        // VF/HF - Vertical & Horizontal flipping
-        // GFX - Tile number from VRAM. i.e. VRAM address to read graphics data, divided by $20.
-        // NEXT - Next sprite number to jump to. Earlier sprites go on top of later ones. The final sprite must jump to
-        // 0.
+        u16 vertical_pos = ((sprite[0] & 0b11) << 8) | sprite[1];
 
-        u16 vp = ((sprite[0] & 0b11) << 8) | sprite[1];
-        u8 hs = (sprite[2] >> 2) & 0b11;
-        u8 vs = (sprite[2] >> 0) & 0b11;
+        // Size
+        u8 horizontal_size = (sprite[2] >> 2) & 0b11;
+        u8 vertical_size = (sprite[2] >> 0) & 0b11;
 
-        u8 pr = sprite[4] >> 7;
-        u8 pl = (sprite[4] >> 5) & 0b11;
-        u8 vf = (sprite[4] >> 4) & 0b1;
-        u8 hf = (sprite[4] >> 3) & 0b1;
+        u8 priority = sprite[4] >> 7;           // Priority
+        u8 palette = (sprite[4] >> 5) & 0b11;   // Palette line
 
-        u16 gfx = ((sprite[4] & 0b111) << 8) | sprite[5];
-        u16 hp = ((sprite[6] & 0b1) << 8) | sprite[7];
+        // Vertical & Horizontal flipping
+        u8 vertical_flip = (sprite[4] >> 4) & 0b1;
+        u8 horizontal_flip = (sprite[4] >> 3) & 0b1;
 
-        for (int j = 0; j < hs * vs; j++) {
-            int x = j / vs;
-            int y = j % vs;
+        u16 gfx_tile_index = ((sprite[4] & 0b111) << 8) | sprite[5]; // Tile number from VRAM. i.e.
+                                                                     // VRAM address to read graphics data, divided by $20.
+        u16 horizontal_pos = ((sprite[6] & 0b1) << 8) | sprite[7];
 
-            int tile_index = gfx + j;
+        for (int j = 0; j < horizontal_size * vertical_size; j++) {
+            int jx = j / vertical_size;
+            int jy = j % vertical_size;
 
-            float scr_x = (float)(hp + x * 8);
-            float scr_y = (float)(vp + y * 8);
+            int tile_index = gfx_tile_index + j;
 
-            DrawTextureRec(vdp_window_tex__, (Rectangle){pl * 8, tile_index * 8, 8, 8}, (Vector2){scr_x, scr_y}, WHITE);
+            float scr_x = (float) (horizontal_pos + jx * 8) * scale + x;
+            float scr_y = (float) (vertical_pos + jy * 8) * scale + y;
+
+            DrawTexturePro(
+              vdp_window_tex__,
+              (Rectangle){palette * 8, tile_index * 8, 8, 8},
+              (Rectangle){scr_x, scr_y, 8 * scale, 8 * scale},
+              (Vector2){0, 0},
+              0,
+              WHITE
+            );
         }
 
-        next = sprite[3] & 0b1111111;
+        next = sprite[3] & 0b1111111; // Next sprite number to jump to. Earlier sprites go on top of later ones. The final sprite must jump to
     } while (next != 0);
+
+    DrawRectangleLinesEx((Rectangle){x, y, 512 * scale, 512 * scale}, 2, RED);
+    DrawRectangleLinesEx((Rectangle){x + 128 * scale, y + 128 * scale, 320 * scale, 224 * scale}, 2, RED);
 }
 
 static void vdp__set_window__(const u8* window, size window_size) {
@@ -320,10 +326,10 @@ void md_vdp__render() {
 
     BeginShaderMode(palette_shader__);
     {
-//        draw_plane__(&planes__[MD_VDP_PLANE__BACKGROUND], 140, 100, 2);
-//        draw_plane__(&planes__[MD_VDP_PLANE__FOREGROUND], 140, 100, 2);
+        draw_plane__(&planes__[MD_VDP_PLANE__BACKGROUND], 140, 100, 2);
+        draw_plane__(&planes__[MD_VDP_PLANE__FOREGROUND], 140, 100, 2);
 
-        vdp__draw_sprites__();
+        vdp__draw_sprites__(140 - 128 * 2, 100 - 128 * 2, 2);
 
         draw_plane__(&planes__[MD_VDP_PLANE__BACKGROUND], 800, 100, 1);
         draw_plane__(&planes__[MD_VDP_PLANE__FOREGROUND], 800, 100 + 224, 1);
@@ -359,16 +365,11 @@ void md_vdp__set_window_vertical_position(MdVdpWindowDirection dir, u8 units) {
 const MdMemoryVram* md_vdp__dma_begin() {
     static MutableByteArray n = {0, 0};
 
-    static MutableByteArray s = {sprite_table__, sizeof(sprite_table__) / sizeof (sprite_table__[0])};
+    static MutableByteArray s = {sprite_table__, sizeof(sprite_table__) / sizeof(sprite_table__[0])};
 
     ///////////////////////////////////////////////
 
-    static const MdMemoryVram vram = {
-      &n,
-      &n,
-      &n,
-      .plane_sprite_mut = &s
-    };
+    static const MdMemoryVram vram = {&n, &n, &n, .plane_sprite_mut = &s};
 
     return &vram;
 }
