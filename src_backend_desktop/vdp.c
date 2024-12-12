@@ -335,7 +335,7 @@ void md_vdp__render() {
         draw_plane__(&planes__[MD_VDP_PLANE__FOREGROUND], 800, 100 + 224, 1);
 
         if (vdp_window_tex__.id != 0) {
-            draw_tiles_debug(32, 360, 8, 1);
+            draw_tiles_debug(32, 600, 96, 1);
             //            DrawTextureEx(vdp_window_tex__, (Vector2){32, 32}, 0, 1, WHITE);
         }
     }

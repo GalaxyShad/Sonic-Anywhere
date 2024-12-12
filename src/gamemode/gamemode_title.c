@@ -25,9 +25,14 @@ static void setup_vdp__() {
     md_vdp__set_background_color(2, 0);
 }
 
-static void load_nemesis_art_to_vram__(ResourceID res_id) {
+static void load_nemesis_art_to_vram__(ResourceID res_id, u16 tile_shift) {
     ReadonlyByteArray res = s_resource(res_id);
-    MutableByteArray shifted = bytearray__shift_mut(md_mem__vram()->plane_window_mut, 32); //32
+    MutableByteArray shifted = {
+      .size = md_mem__vram()->plane_window_mut->size - tile_shift * 32,
+      .arr = md_mem__vram()->plane_window_mut->arr + tile_shift * 32
+    };
+
+      //bytearray__shift_mut(md_mem__vram()->plane_window_mut, 32 * tile_shift);
     compressors__nemesis_decompress_byte_arr(&res, &shifted);
     md_vdp__set_name_table_location_for_plane(MD_VDP_PLANE__WINDOW, md_mem__vram()->plane_window_mut); // FIXME temp solution to update VDP, cuz there is no DMA
 }
@@ -61,10 +66,10 @@ void game_mode_title() {
     s_object_pool__all_clear_props();
 
     // Load Japanese credits
-    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__HIDDEN_JAPANESE_CREDITS_NEM);
+    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__HIDDEN_JAPANESE_CREDITS_NEM, 64);
 
     // Load alphabet
-    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__ENDING_CREDITS_NEM);
+    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__ENDING_CREDITS_NEM, 0);
 
     // Load mappings for Japanese credits
     ReadonlyByteArray jp_credits_mappings = s_resource(RESOURCE__TILEMAPS__HIDDEN_JAPANESE_CREDITS_ENI);
@@ -85,9 +90,9 @@ void game_mode_title() {
 
     DISABLE_INTERRUPTS()
 
-    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__TITLE_SCREEN_FOREGROUND_NEM);
-//    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__TITLE_SCREEN_SONIC_NEM);
-//    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__TITLE_SCREEN_TM_NEM);
+    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__TITLE_SCREEN_FOREGROUND_NEM, 0);
+    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__TITLE_SCREEN_SONIC_NEM, 300);
+    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__TITLE_SCREEN_TM_NEM, 512);
 
     load_level_select_font__();
 
@@ -98,6 +103,8 @@ void game_mode_title() {
     //		move.w	#id_GHZ_act1,(v_zone).w			; set level to GHZ act 1 (0000)
     //		move.w	#0,(v_palcycle_time).w			; disable palette cycling
 
+    // LevelSizeLoad
+
     // Load GHZ 16x16 mappings
     ReadonlyByteArray blk_16_ghz = s_resource(RESOURCE__MAP16__GHZ_ENI);
     compressors__enigma_decompress_byte_arr(&blk_16_ghz, md_mem()->tiles_mut, 0);
@@ -106,12 +113,13 @@ void game_mode_title() {
     ReadonlyByteArray blk_256_ghz = s_resource(RESOURCE__MAP256__GHZ_KOS);
     compressors__kosinski_decompress_byte_arr(&blk_256_ghz, md_mem()->chunks_mut);
 
-    // bsr.w	LevelLayoutLoad				; load GHZ1 level layout including background
+    md_vdp__copy_tilemap_to_plane_r(MD_VDP_PLANE__BACKGROUND, 0, 0, (ReadonlyByteArray*)md_mem()->chunks_mut, 32, 32);
+    // TODO LevelLayoutLoad 	; load GHZ1 level layout including background
     s_fade__out();				// fade out "SONIC TEAM PRESENTS" screen to black
 
     DISABLE_INTERRUPTS()
 
-    // bsr.w	ClearScreen
+    game_vdp__clear_screen();
     //		lea	(vdp_control_port).l,a5
     //		lea	(vdp_data_port).l,a6
     //		lea	(v_bg1_x_pos).w,a3
@@ -128,7 +136,7 @@ void game_mode_title() {
     // locVRAM	0
 
     // load GHZ patterns
-    //load_nemesis_art_to_vram__(RESOURCE__ARTNEM__8X8_GHZ1_NEM);
+    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__8X8_GHZ1_NEM, 0);
 
     game_vdp__load_palette(GAME_VDP_PALETTE_ID__TITLE);
     // PalLoad_Next
