@@ -66,10 +66,10 @@ void game_mode_title() {
     s_object_pool__all_clear_props();
 
     // Load Japanese credits
-    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__HIDDEN_JAPANESE_CREDITS_NEM, 64);
+//    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__HIDDEN_JAPANESE_CREDITS_NEM, 0);
 
     // Load alphabet
-    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__ENDING_CREDITS_NEM, 0);
+    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__ENDING_CREDITS_NEM, 166);
 
     // Load mappings for Japanese credits
     ReadonlyByteArray jp_credits_mappings = s_resource(RESOURCE__TILEMAPS__HIDDEN_JAPANESE_CREDITS_ENI);
@@ -90,9 +90,9 @@ void game_mode_title() {
 
     DISABLE_INTERRUPTS()
 
-    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__TITLE_SCREEN_FOREGROUND_NEM, 0);
-    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__TITLE_SCREEN_SONIC_NEM, 300);
-    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__TITLE_SCREEN_TM_NEM, 512);
+    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__TITLE_SCREEN_FOREGROUND_NEM, 512);
+    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__TITLE_SCREEN_SONIC_NEM, 768);
+//    load_nemesis_art_to_vram__(RESOURCE__ARTNEM__TITLE_SCREEN_TM_NEM, 512);
 
     load_level_select_font__();
 
@@ -132,8 +132,6 @@ void game_mode_title() {
     compressors__enigma_decompress_byte_arr(&title_mappings, md_mem()->chunks_mut, 0);
 
     md_vdp__copy_tilemap_to_plane_r(MD_VDP_PLANE__FOREGROUND, 3, 4, (ReadonlyByteArray*)md_mem()->chunks_mut, 0x22, 0x16);
-
-    // locVRAM	0
 
     // load GHZ patterns
     load_nemesis_art_to_vram__(RESOURCE__ARTNEM__8X8_GHZ1_NEM, 0);

@@ -12,7 +12,7 @@
 #define SCREEN_TOP 128
 
 #define ArtTile_Credits_Font 0x5A0
-#define ArtTile_Sonic_Team_Font 1
+#define ArtTile_Sonic_Team_Font 166
 //#define ArtTile_Sonic_Team_Font 0x0A6
 
 static u16 credits_num__ = 0;

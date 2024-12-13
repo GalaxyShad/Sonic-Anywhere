@@ -12,8 +12,9 @@ const MdMemoryVram* md_mem__vram() {
     static u8 bg[PLANE_SIZE];
     static MutableByteArray barr_bg = {bg, PLANE_SIZE};
 
-    static u8 window[PLANE_SIZE];
-    static MutableByteArray barr_window = {window, PLANE_SIZE};
+#define N 0x10000
+    static u8 window[N];
+    static MutableByteArray barr_window = {window, N};
 
     ///////////////////////////////////////////////
 

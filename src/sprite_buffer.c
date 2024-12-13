@@ -5,7 +5,8 @@
 
 typedef struct SpriteNode {
     u16 xpos, ypos;
-    u8 width, height, tile, xflip, yflip, pal, pri;
+    u8 width, height, xflip, yflip, pal, pri;
+    u16 tile;
     u8 next;
 } SpriteNode;
 
@@ -51,7 +52,7 @@ static void sprite_to_vram__(const SpriteNode* spr, u8* dst) {
     dst[4] |= (spr->pal & 0b11) << 5;
     dst[4] |= (spr->yflip & 0b1) << 4;
     dst[4] |= (spr->xflip & 0b1) << 3;
-    dst[4] |= (spr->tile & 0b111);
+    dst[4] |= ((spr->tile >> 8) & 0b111);
     dst[5] = (spr->tile & 0xFF);
 
     dst[6] = (spr->xpos >> 8) & 0b1;

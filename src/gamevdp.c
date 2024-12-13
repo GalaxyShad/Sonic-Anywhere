@@ -46,6 +46,11 @@ void game_vdp__load_palette(GameVdpPaletteID pal_id) {
 
     ReadonlyByteArray res = s_resource(res_id);
 
+    for (int i = 0; i < 16 * 4; i++) {
+        palette__[i] = 0;
+        palette_fade__[i] = 0;
+    }
+
     for (int i = 0; i < res.size / 2; i++) {
         MDColor color = res.arr[i * 2];
         color = (color << 8) | res.arr[i * 2 + 1];

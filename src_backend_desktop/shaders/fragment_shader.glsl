@@ -29,7 +29,7 @@ void main()
 
     // Calculate final fragment color. Note that the palette color components
     // are defined in the range [0..255] and need to be normalized to [0..1]
-    if (index % 16 != 0) {
+    if (index != 0) {
         finalColor = vec4(color/255.0, texelColor.a);
     } else {
         finalColor = vec4(color/255.0, 0);

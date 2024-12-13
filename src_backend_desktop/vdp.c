@@ -3,7 +3,11 @@
 #include "include_backend/debug.h"
 
 #include "src/gamevdp.h"
-static MDColor palette__[4 * 16];
+
+#define PALETTES_ROWS_COUNT 4
+#define PALETTE_COLORS_COUNT 16
+
+static MDColor palette__[PALETTES_ROWS_COUNT * PALETTE_COLORS_COUNT];
 static u8 palette_bg_index__ = 0;
 
 ////////////////////////////////////////////////////////
@@ -65,16 +69,30 @@ typedef struct Plane {
 } Plane;
 
 
-static u8 tiles__[4096 * 16 * 4];
-
-
 static Plane planes__[2] = {};
 
-static u8 cells_hor_count__ = 40;
-static u8 sprite_table__[0x50 * 8] = {0};
+#define SPRITE_COUNT 0x50
+#define SPRITE_WORD_LENGTH 8
 
+
+static u8 cells_hor_count__ = 40;
+static u8 sprite_table__[SPRITE_COUNT * SPRITE_WORD_LENGTH] = {0};
+
+
+#define COLOR_RGBA_WORD_SIZE 4
+
+
+#define TILE_WIDTH 16
+#define TILE_HEIGHT 16
+
+#define TILE_MAP_TILES_COUNT 1024
+
+#define TEXTURE_TILE_MAP_WIDTH ((TILE_WIDTH * PALETTES_ROWS_COUNT) / 2)
+#define TEXTURE_TILE_MAP_HEIGHT (TILE_HEIGHT * TILE_MAP_TILES_COUNT)
 
 static Texture2D vdp_window_tex__;
+static u8 vdp_window_tex_grayscale_pixel_buffer__[TEXTURE_TILE_MAP_HEIGHT * TEXTURE_TILE_MAP_WIDTH]; // 1 byte per pixel
+
 static Shader palette_shader__;
 static int is_vdp_window_changed__ = 0;
 
@@ -91,15 +109,16 @@ static void vdp__draw_sprites__(float x, float y, float scale) {
         u8 horizontal_size = (sprite[2] >> 2) & 0b11;
         u8 vertical_size = (sprite[2] >> 0) & 0b11;
 
-        u8 priority = sprite[4] >> 7;           // Priority
-        u8 palette = (sprite[4] >> 5) & 0b11;   // Palette line
+        u8 priority = sprite[4] >> 7;         // Priority
+        u8 palette = (sprite[4] >> 5) & 0b11; // Palette line
 
         // Vertical & Horizontal flipping
         u8 vertical_flip = (sprite[4] >> 4) & 0b1;
         u8 horizontal_flip = (sprite[4] >> 3) & 0b1;
 
-        u16 gfx_tile_index = ((sprite[4] & 0b111) << 8) | sprite[5]; // Tile number from VRAM. i.e.
-                                                                     // VRAM address to read graphics data, divided by $20.
+        u16 gfx_tile_index =
+          ((sprite[4] & 0b111) << 8) | sprite[5]; // Tile number from VRAM. i.e.
+                                                  // VRAM address to read graphics data, divided by $20.
         u16 horizontal_pos = ((sprite[6] & 0b1) << 8) | sprite[7];
 
         for (int j = 0; j < horizontal_size * vertical_size; j++) {
@@ -121,7 +140,8 @@ static void vdp__draw_sprites__(float x, float y, float scale) {
             );
         }
 
-        next = sprite[3] & 0b1111111; // Next sprite number to jump to. Earlier sprites go on top of later ones. The final sprite must jump to
+        next = sprite[3] & 0b1111111; // Next sprite number to jump to. Earlier sprites go on top of later ones. The
+                                      // final sprite must jump to
     } while (next != 0);
 
     DrawRectangleLinesEx((Rectangle){x, y, 512 * scale, 512 * scale}, 2, RED);
@@ -140,8 +160,8 @@ static void vdp__set_window__(const u8* window, size window_size) {
 
 
         for (int j = 0; j < 4; j++) {
-            tiles__[y * w + x * 2 + 0 + j * 8] = hcol + j * 16;
-            tiles__[y * w + x * 2 + 1 + j * 8] = lcol + j * 16;
+            vdp_window_tex_grayscale_pixel_buffer__[y * w + x * 2 + 0 + j * 8] = hcol + j * TILE_WIDTH;
+            vdp_window_tex_grayscale_pixel_buffer__[y * w + x * 2 + 1 + j * 8] = lcol + j * TILE_WIDTH;
         }
     }
 
@@ -190,7 +210,7 @@ static void draw_plane__(Plane* plane, int x, int y, int scale) {
 
         // PCCV HAAA AAAA AAAA
 
-        u16 p = (word >> 15) & 1; //  TODO
+        u16 priority = (word >> 15) & 1; //  TODO
         u16 pal_id = (word >> 13) & 0b11;
         u16 vert_flip = (word >> 12) & 1;
         u16 hor_flip = (word >> 11) & 1;
@@ -265,7 +285,7 @@ void md_vdp_palette__load_u16(const u16* pal) {
 }
 
 void md_vdp__init() {
-    InitWindow(1280, 720, "Sonic Anywhere");
+    InitWindow(1280, 800, "Sonic Anywhere");
     InitAudioDevice();
 
 #define SHADER_PATH "../src_backend_desktop/shaders"
@@ -284,14 +304,33 @@ void md_vdp__init() {
     SetTargetFPS(60);
 }
 
-static void draw_tiles_debug(float x, float y, int in_row_len, float scale) {
+#include <printf.h>
+static void draw_tiles_debug(float x, float y, int in_row_len, float scale, bool is_back_layer) {
     for (int i = 0; i < vdp_window_tex__.height / 8; i++) {
         float space = 2;
 
-        float x_ = x + (i % in_row_len) * (8 + space);
-        float y_ = y + (i / in_row_len) * (8 + space);
+        Vector2 pos = {.x = x + (i % in_row_len) * (8 + space), .y = y + (i / in_row_len) * (8 + space)};
 
-        DrawTextureRec(vdp_window_tex__, (Rectangle){0, i * 8, 8, 8}, (Vector2){x_, y_}, WHITE);
+        Rectangle rect = {0, i * 8, 8, 8};
+
+        if (is_back_layer) {
+            // Tooltip
+            if (GetMouseX() > pos.x && GetMouseX() < pos.x + 8 && GetMouseY() > pos.y && GetMouseY() < pos.y + 8) {
+                char s[20];
+                sprintf(s, "%04D x%02X", i, i);
+
+                Rectangle tooltip_rect = {pos.x, pos.y - 16, 64, 16};
+
+                DrawRectangleRounded(tooltip_rect, 0.25f, 0, BLACK);
+                DrawText(s, tooltip_rect.x + 4, tooltip_rect.y + 4, 8, WHITE);
+            }
+
+            DrawRectangleLines(pos.x, pos.y, 8, 8, BLACK);
+
+            continue;
+        }
+
+        DrawTextureRec(vdp_window_tex__, rect, pos, WHITE);
     }
 }
 
@@ -311,10 +350,10 @@ void md_vdp__render() {
 
         Image img;
 
-        img.data = tiles__;
+        img.data = vdp_window_tex_grayscale_pixel_buffer__;
         img.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
-        img.width = 32;
-        img.height = (4096 * 16) / 32;
+        img.width = TEXTURE_TILE_MAP_WIDTH;
+        img.height = TEXTURE_TILE_MAP_HEIGHT;
         img.mipmaps = 1;
 
         vdp_window_tex__ = LoadTextureFromImage(img);
@@ -326,6 +365,9 @@ void md_vdp__render() {
 
     BeginShaderMode(palette_shader__);
     {
+        DrawRectangle(140, 100, 320* 2, 224 * 2, (Color){.a=0xFF, .r = palette_bg_index__});
+
+
         draw_plane__(&planes__[MD_VDP_PLANE__BACKGROUND], 140, 100, 2);
         draw_plane__(&planes__[MD_VDP_PLANE__FOREGROUND], 140, 100, 2);
 
@@ -335,11 +377,13 @@ void md_vdp__render() {
         draw_plane__(&planes__[MD_VDP_PLANE__FOREGROUND], 800, 100 + 224, 1);
 
         if (vdp_window_tex__.id != 0) {
-            draw_tiles_debug(32, 600, 96, 1);
+            draw_tiles_debug(32, 560, 120, 1, false);
             //            DrawTextureEx(vdp_window_tex__, (Vector2){32, 32}, 0, 1, WHITE);
         }
     }
     EndShaderMode();
+
+    draw_tiles_debug(32, 560, 120, 1, true);
 
     DrawFPS(16, 16);
 
