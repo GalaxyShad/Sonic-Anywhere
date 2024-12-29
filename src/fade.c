@@ -1,6 +1,7 @@
 #include "fade.h"
 
 #include "gamevdp.h"
+#include "include_backend/mdcolor.h"
 #include "plc.h"
 
 static MDColor color_fade_to_black__(MDColor color, MDColor fade_color) {
@@ -19,7 +20,7 @@ static MDColor color_fade_to_black__(MDColor color, MDColor fade_color) {
         g--;
     }
 
-    if (b != 0) {
+    if (r == 0 && g == 0 && b != 0) {
         b--;
     }
 
@@ -40,11 +41,11 @@ static MDColor color_fade_from_black__(MDColor color, MDColor fade_color) {
     u8 fg = (fade_color >> 5) & 0b111;
     u8 fb = (fade_color >> 9) & 0b111;
 
-    if (r != fr) {
+    if (r != fr && b == fb) {
         r++;
     }
 
-    if (g != fg) {
+    if (g != fg && b == fb) {
         g++;
     }
 
@@ -57,14 +58,21 @@ static MDColor color_fade_from_black__(MDColor color, MDColor fade_color) {
     return color;
 }
 
+static MDColor color_clear__(MDColor color, MDColor fade_color) {
+    return 0;
+}
+
 void s_fade__in() {
+    
     // PaletteFadeIn
+
+    game_vdp__palette_all_foreach(color_clear__);
     for (u16 i = 0; i < 0x15; i++) {
         //    FadeIn_FromBlack:
         game_vdp__set_vblank_routine_counter(0x12);
         game_vdp__wait_for_vblank();
-        game_vdp__palette_foreach(GAME_VDP_PALETTE_LAYER__MAIN, color_fade_from_black__);
-        game_vdp__palette_foreach(GAME_VDP_PALETTE_LAYER__WATER, color_fade_from_black__);
+
+        game_vdp__palette_all_foreach(color_fade_from_black__);
 
         plc__run();
     }
@@ -76,8 +84,8 @@ void s_fade__out() {
         game_vdp__set_vblank_routine_counter(0x12);
         game_vdp__wait_for_vblank();
         //    FadeOut_ToBlack:
-        game_vdp__palette_foreach(GAME_VDP_PALETTE_LAYER__MAIN, color_fade_to_black__);
-        game_vdp__palette_foreach(GAME_VDP_PALETTE_LAYER__WATER, color_fade_to_black__);
+
+        game_vdp__palette_all_foreach(color_fade_to_black__);
 
         plc__run();
     }

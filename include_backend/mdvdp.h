@@ -5,6 +5,9 @@
 #include "mdmem.h"
 #include "mdcolor.h"
 
+// https://segaretro.org/Sega_Mega_Drive/VDP_general_usage
+// https://segaretro.org/Sega_Mega_Drive/VDP_registers
+
 void md_vdp__init();
 
 void md_vdp_palette__load(const ReadonlyByteArray* palette);

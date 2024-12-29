@@ -46,6 +46,8 @@ typedef enum GameVdpPaletteLayerID {
     GAME_VDP_PALETTE_LAYER__WATER
 } GameVdpPaletteLayerID;
 
+void game_vdp__palette_all_foreach(MDColor (*func)(MDColor, MDColor));
+
 void game_vdp__palette_foreach(GameVdpPaletteLayerID pal_id, MDColor (*func)(MDColor, MDColor));
 
 void game_vdp__palette_set_color(u8 index, MDColor color);

@@ -3,6 +3,7 @@
 #include "include_backend/debug.h"
 
 #include "src/gamevdp.h"
+#include <_stdlib.h>
 
 #define PALETTES_ROWS_COUNT 4
 #define PALETTE_COLORS_COUNT 16
@@ -287,8 +288,9 @@ void md_vdp_palette__load_u16(const u16* pal) {
 void md_vdp__init() {
     InitWindow(1280, 800, "Sonic Anywhere");
     InitAudioDevice();
+    SetExitKey(0);
 
-#define SHADER_PATH "../src_backend_desktop/shaders"
+#define SHADER_PATH "src_backend_desktop/shaders"
 
     palette_shader__ = LoadShader(0, SHADER_PATH "/fragment_shader.glsl");
 
@@ -339,6 +341,9 @@ void md_vdp__render() {
     int paletteLoc = GetShaderLocation(palette_shader__, "palette");
     SetShaderValueV(palette_shader__, paletteLoc, shader_palette__, SHADER_UNIFORM_IVEC3, 16 * 4);
 
+    if (IsKeyPressed(KEY_ESCAPE) || WindowShouldClose()) 
+        exit(0);
+
     BeginDrawing();
 
     vdp__screen_clear__();
@@ -347,7 +352,6 @@ void md_vdp__render() {
         if (vdp_window_tex__.id != 0) {
             UnloadTexture(vdp_window_tex__);
         }
-
         Image img;
 
         img.data = vdp_window_tex_grayscale_pixel_buffer__;
@@ -399,9 +403,11 @@ void md_vdp__set_plane_size(MdVdpPlaneSize cells_width, MdVdpPlaneSize cells_hei
 
     NOT_IMPLEMENTED
 }
+
 void md_vdp__set_window_horizontal_position(MdVdpWindowDirection dir, u8 units) {
     NOT_IMPLEMENTED
 }
+
 void md_vdp__set_window_vertical_position(MdVdpWindowDirection dir, u8 units) {
     NOT_IMPLEMENTED
 }

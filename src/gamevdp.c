@@ -71,6 +71,11 @@ void game_vdp__palette_copy_to_vdp() {
     );
 }
 
+void game_vdp__palette_all_foreach(MDColor (*func)(MDColor, MDColor)) {
+    game_vdp__palette_foreach(GAME_VDP_PALETTE_LAYER__MAIN, func);
+    game_vdp__palette_foreach(GAME_VDP_PALETTE_LAYER__WATER, func);
+}
+
 void game_vdp__palette_foreach(GameVdpPaletteLayerID pal_id, MDColor (*func)(MDColor, MDColor)) {
     MDColor* pal = (pal_id == GAME_VDP_PALETTE_LAYER__MAIN) ? palette__ : palette_water__;
     MDColor* pal_fade = (pal_id == GAME_VDP_PALETTE_LAYER__MAIN) ? palette_fade__ : palette_water_fade__;
