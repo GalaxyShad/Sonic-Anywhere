@@ -1,11 +1,25 @@
 
-#include "src/gamemode/game.h"
+#include "src2/context.h"
+#include "src2/sonic.h"
 
 #include "include_backend/mdvdp.h"
+#include "src2/variables.h"
 
-void* game_thread__(void *ptr) {
-   game__init();
-   return 0;
+static S1Context ctx__;
+
+int should_vblank = 0;
+
+void vbla_int() {
+    should_vblank = 1;
+    
+}
+
+void* game_thread__(void* ptr) {
+    
+
+    GameInit(&ctx__);
+
+    return 0;
 }
 
 #ifndef _WIN32
@@ -13,13 +27,20 @@ void* game_thread__(void *ptr) {
 #include <pthread.h>
 
 int main(int argc, char* args[]) {
+    ctx__.var = s1_getVariables();
+    ctx__.varptr = s1_getVariablePointers();
+
     pthread_t game_thread;
 
-    pthread_create(&game_thread, NULL, game_thread__, (void*)NULL);
+    pthread_create(&game_thread, NULL, game_thread__, (void*) NULL);
 
+    md_vdp__set_vblank_interrupt(vbla_int);
     md_vdp__init();
     while (1) {
         md_vdp__render();
+        if (should_vblank) {
+            VBlank(&ctx__);
+        }
     }
 }
 

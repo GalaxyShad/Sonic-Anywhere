@@ -48,6 +48,9 @@ add_executable(sonic_anywhere
         src/fade.h
         src/fade.c
         src/objects/obj_title_screen_sonic_0e.c
+
+        src2/sonic.c
+        src2/variables.c
 )
 
 target_include_directories(sonic_anywhere PRIVATE ${raylib_public_headers})

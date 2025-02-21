@@ -2,7 +2,6 @@
 
 #include "include_backend/debug.h"
 
-#include "src/gamevdp.h"
 #include <_stdlib.h>
 
 #define PALETTES_ROWS_COUNT 4
@@ -11,7 +10,13 @@
 static MDColor palette__[PALETTES_ROWS_COUNT * PALETTE_COLORS_COUNT];
 static u8 palette_bg_index__ = 0;
 
+static void (*vbla_interrupt)(void) = 0;
+
 ////////////////////////////////////////////////////////
+
+void md_vdp__set_vblank_interrupt(void (*interrupt)(void)) {
+    vbla_interrupt = interrupt;
+}
 
 
 void md_vdp_palette__load(const ReadonlyByteArray* palette) {
@@ -365,7 +370,7 @@ void md_vdp__render() {
         is_vdp_window_changed__ = 0;
     }
 
-    vpu__debug_draw_palette__(palette__, 900, 8);
+    //vpu__debug_draw_palette__(palette__, 900, 8);
 
     BeginShaderMode(palette_shader__);
     {
@@ -393,7 +398,8 @@ void md_vdp__render() {
 
     EndDrawing();
 
-    game_vdp__on_vblank_interrupt();
+    if (vbla_interrupt != 0)
+        vbla_interrupt();
 }
 void md_vdp__set_plane_size(MdVdpPlaneSize cells_width, MdVdpPlaneSize cells_height) {
     ASSERT(cells_height != MD_VDP_PLANE_SIZE__INVALID && cells_width != MD_VDP_PLANE_SIZE__INVALID)

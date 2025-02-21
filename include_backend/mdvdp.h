@@ -10,6 +10,8 @@
 
 void md_vdp__init();
 
+void md_vdp__set_vblank_interrupt(void (*interrupt)(void));
+
 void md_vdp_palette__load(const ReadonlyByteArray* palette);
 void md_vdp_palette__load_u16(const u16* pal); // FIXME temp solution for MSB and LSB byte orders
 

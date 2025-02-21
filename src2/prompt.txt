@@ -1,0 +1,53 @@
+Help rewrite folowwing motorolla68k asm to C:
+Provide only Routine/Function code snippet
+All registers (d and a) should be used through (S1Context ctx) - ctx->reg.d#, ctx->reg.a#
+All variables should be used through (S1Context ctx) - ctx->var.
+Do not allocate any variables inside function 
+
+typedef struct S1Context {
+    S1Variables         var;
+
+    struct {
+        u32 d0, d1, d2, d3, d4, d5, d6, d7;
+        u8 *a0, *a1, *a2, *a3, *a4, *a5, *a6, *a7;
+    } reg;
+
+    u8* vramAddr;
+    
+    u8* vram_fg_;
+    u8* vram_bg_;
+    u8* vram_sprites_;
+    u8* vram_hscroll_;
+} S1Context;
+
+//////////////////
+Example:
+
+PaletteWhiteOut:
+		move.w	#$003F,(v_pfade_start).w ; start position = 0; size = $40
+		move.w	#$15,d4
+
+.mainloop:
+		move.b	#$12,(v_vbla_routine).w
+		bsr.w	WaitForVBla
+		bsr.s	WhiteOut_ToWhite
+		bsr.w	RunPLC
+		dbf	d4,.mainloop
+		rts	
+
+static void PaletteWhiteOut(S1Context* ctx) {
+    ctx->var.v_pfade_start = 0x003F;
+    ctx->reg.d4 = 0x15;
+
+    // mainloop
+    do {
+        ctx->var.v_vbla_routine = 0x12;
+        WaitForVBla(ctx);
+        WhiteOut_ToWhite(ctx);
+        RunPLC(ctx);
+        ctx->reg.d4--;
+    } while (ctx->reg.d4 != 0)
+}
+
+/////////////////
+Code snippet: 
