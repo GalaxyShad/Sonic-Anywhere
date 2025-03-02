@@ -48,6 +48,14 @@ void md_vdp__copy_tilemap_to_plane_r(
   MdVdpPlane plane_id, u8 shift_x, u8 shift_y, const ReadonlyByteArray* tilemap, size cells_width, size cells_height
 );
 
+void md_vdp__copy_tilemap_to_plane_r_2(
+  MdVdpPlane plane_id, u8 shift_x, u8 shift_y, u8* source, size cells_width, size cells_height
+);
+
+void md_vdp__copy_tilemap_to_plane_r_3(
+  MdVdpPlane plane_id, u32 shift, u8* source, size cells_width, size cells_height
+);
+
 typedef enum MdVdpRamAccessMode {
     MD_VDP_RAM_ACCESS_MODE__VRAM_WRITE,
     MD_VDP_RAM_ACCESS_MODE__CRAM_WRITE,
@@ -92,5 +100,22 @@ void md_vdp__set_window_vertical_position(MdVdpWindowDirection dir, u8 units);
 const MdMemoryVram* md_vdp__dma_begin(); // get pointers to VRAM
 void md_vdp__dma_end(); // update internal VDP state after VRAM modification
 
+typedef enum MdVdpDmaType {
+    MD_VDP_DMA_TYPE__68K_TO_VRAM_COPY,
+    MD_VDP_DMA_TYPE__VRAM_FILL,
+    MD_VDP_DMA_TYPE__VRAM_TO_VRAM
+} MdVdpDmaMode;
+
+void md_vdp__dma_set_source(u8* src, size len, MdVdpDmaMode type);
+
+
+typedef enum MdVdpDmaDestination {
+    MD_VDP_DMA_DST__VRAM,
+    MD_VDP_DMA_DST__CRAM,
+    MD_VDP_DMA_DST__VSRAM,
+} MdVdpDmaDestination;
+
+void md_vdp__dma_set_destination(u32 adr);
+void md_vdp__dma_set_destination_type(u32 adr, MdVdpDmaDestination type);
 
 #endif // SONIC_ANYWHERE_MDVDP_H

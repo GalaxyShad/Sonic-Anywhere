@@ -54,8 +54,8 @@ typedef struct S1Variables {
     u8 unused_l52; //		; unused
     u8 v_spritecount; // number of sprites on-screen
     u8 unused_l54[5]; //		; unused
-    u16 v_pcyc_num;  // palette cycling - current reference number
-    u16 v_pcyc_time; // palette cycling - time until the next change
+    i16 v_pcyc_num;  // palette cycling - current reference number
+    i16 v_pcyc_time; // palette cycling - time until the next change
     u32 v_random;    // pseudo random number buffer
     u16 f_pause;     // flag set to pause the game
     u8	unused_l59[4]; //		; unused

@@ -11,7 +11,6 @@ int should_vblank = 0;
 
 void vbla_int() {
     should_vblank = 1;
-    
 }
 
 void* game_thread__(void* ptr) {
@@ -34,6 +33,9 @@ int main(int argc, char* args[]) {
 
     pthread_create(&game_thread, NULL, game_thread__, (void*) NULL);
 
+    md_vdp__set_name_table_location_for_plane(MD_VDP_PLANE__FOREGROUND, md_mem__vram()->plane_foreground_mut);
+    md_vdp__set_name_table_location_for_plane(MD_VDP_PLANE__BACKGROUND, md_mem__vram()->plane_background_mut);
+    
     md_vdp__set_vblank_interrupt(vbla_int);
     md_vdp__init();
     while (1) {

@@ -260,9 +260,16 @@ static void vdp__screen_clear__() {
 void md_vdp__copy_tilemap_to_plane_r(
   MdVdpPlane plane_id, u8 shift_x, u8 shift_y, const ReadonlyByteArray* tilemap, size cells_width, size cells_height
 ) {
+    md_vdp__copy_tilemap_to_plane_r_2(plane_id, shift_x, shift_y, tilemap->arr, cells_width, cells_height);
+}
+
+
+void md_vdp__copy_tilemap_to_plane_r_2(
+  MdVdpPlane plane_id, u8 shift_x, u8 shift_y, u8* source, size cells_width, size cells_height
+) {
     Plane* p = planes__ + plane_id;
 
-    u16* src = (u16*) tilemap->arr;
+    u16* src = (u16*) source;
     u16* dst = (u16*) p->data;
 
     for (int i = 0; i < cells_height * cells_width; i++) {
@@ -270,6 +277,23 @@ void md_vdp__copy_tilemap_to_plane_r(
         int y = i / cells_width;
 
         dst[(y + shift_y) * cells_hor_count__ + x + shift_x] = src[y * cells_width + x];
+    }
+}
+
+// TODO FIXME
+void md_vdp__copy_tilemap_to_plane_r_3(
+  MdVdpPlane plane_id, u32 shift, u8* source, size cells_width, size cells_height
+) {
+    Plane* p = planes__ + plane_id;
+
+    u16* src = (u16*) source;
+    u16* dst = (u16*) p->data;
+
+    for (int i = 0; i < cells_height * cells_width; i++) {
+        int x = i % cells_width;
+        int y = i / cells_width;
+
+        dst[shift + y * cells_hor_count__ + x] = src[y * cells_width + x];
     }
 }
 
@@ -370,7 +394,7 @@ void md_vdp__render() {
         is_vdp_window_changed__ = 0;
     }
 
-    //vpu__debug_draw_palette__(palette__, 900, 8);
+    vpu__debug_draw_palette__(palette__, 900, 8);
 
     BeginShaderMode(palette_shader__);
     {
@@ -431,5 +455,85 @@ const MdMemoryVram* md_vdp__dma_begin() {
 }
 
 void md_vdp__dma_end() {
+    NOT_IMPLEMENTED
+}
+
+static struct {
+    u8* src;
+    size len;
+    MdVdpDmaMode mode;
+
+    MdVdpDmaDestination dst_type;
+    u32 dst;
+} dma__;
+
+void md_vdp__dma_set_source(u8* src, size len, MdVdpDmaMode type) {
+    dma__.src = src;
+    dma__.len = len;
+    dma__.mode = type;
+}
+
+static void dma_fill__() {
+    NOT_IMPLEMENTED
+}
+
+static void dma_vram_to_vram__() {
+    NOT_IMPLEMENTED
+}
+
+/////////////////////////
+
+static void dma_68k_to_vram__() {
+    NOT_IMPLEMENTED   
+}
+
+static void dma_68k_to_vsram__() {
+    NOT_IMPLEMENTED
+}
+
+static void dma_68k_to_cram__() {
+    for (int i = 0; i < dma__.len / 2; i++) {
+        u16 color = (dma__.src[i * 2 + 0] << 8) | dma__.src[i * 2 + 1];
+
+        palette__[i] = color; 
+
+        Color col = GetColor(mdcolor_to_rgba24__(palette__[i]));
+
+        shader_palette__[i * 3 + 0] = col.r;
+        shader_palette__[i * 3 + 1] = col.g;
+        shader_palette__[i * 3 + 2] = col.b;
+    }
+
+    // for (int i = 0; i < dma__.len / 2; i++) {
+    //     u16 col = *(((u16*)dma__.src) + i);
+
+
+
+    //     palette__[i] = col; 
+    // }
+}
+
+
+static void dma_68k_to_vram_copy__() {
+    switch (dma__.dst_type) {
+        case MD_VDP_DMA_DST__VRAM:  dma_68k_to_vram__(); break;
+        case MD_VDP_DMA_DST__CRAM:  dma_68k_to_cram__(); break;
+        case MD_VDP_DMA_DST__VSRAM: dma_68k_to_vsram__(); break;
+    }
+}
+
+
+void md_vdp__dma_set_destination_type(u32 adr, MdVdpDmaDestination type) {
+    dma__.dst_type = type;
+    dma__.dst = adr;
+
+    switch (dma__.mode) {
+        case MD_VDP_DMA_TYPE__68K_TO_VRAM_COPY: dma_68k_to_vram_copy__();   break;
+        case MD_VDP_DMA_TYPE__VRAM_FILL:        dma_fill__();               break;
+        case MD_VDP_DMA_TYPE__VRAM_TO_VRAM:     dma_vram_to_vram__();       break;
+    }
+}
+
+void md_vdp__dma_set_destination(u32 adr) {
     NOT_IMPLEMENTED
 }

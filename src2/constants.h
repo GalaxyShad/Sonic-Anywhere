@@ -179,78 +179,78 @@ enum {
 
 // Background music
 #define bgm__First	     0x81
-#define bgm_GHZ	         (((ptr_mus81-MusicIndex)/4)+bgm__First)
-#define bgm_LZ		     (((ptr_mus82-MusicIndex)/4)+bgm__First)
-#define bgm_MZ		     (((ptr_mus83-MusicIndex)/4)+bgm__First)
-#define bgm_SLZ	         (((ptr_mus84-MusicIndex)/4)+bgm__First)
-#define bgm_SYZ	         (((ptr_mus85-MusicIndex)/4)+bgm__First)
-#define bgm_SBZ	         (((ptr_mus86-MusicIndex)/4)+bgm__First)
-#define bgm_Invincible	 (((ptr_mus87-MusicIndex)/4)+bgm__First)
-#define bgm_ExtraLife	 (((ptr_mus88-MusicIndex)/4)+bgm__First)
-#define bgm_SS		     (((ptr_mus89-MusicIndex)/4)+bgm__First)
-#define bgm_Title	     (((ptr_mus8A-MusicIndex)/4)+bgm__First)
-#define bgm_Ending	     (((ptr_mus8B-MusicIndex)/4)+bgm__First)
-#define bgm_Boss	     (((ptr_mus8C-MusicIndex)/4)+bgm__First)
-#define bgm_FZ		     (((ptr_mus8D-MusicIndex)/4)+bgm__First)
-#define bgm_GotThrough	 (((ptr_mus8E-MusicIndex)/4)+bgm__First)
-#define bgm_GameOver	 (((ptr_mus8F-MusicIndex)/4)+bgm__First)
-#define bgm_Continue	 (((ptr_mus90-MusicIndex)/4)+bgm__First)
-#define bgm_Credits	     (((ptr_mus91-MusicIndex)/4)+bgm__First)
-#define bgm_Drowning	 (((ptr_mus92-MusicIndex)/4)+bgm__First)
-#define bgm_Emerald	     (((ptr_mus93-MusicIndex)/4)+bgm__First)
-#define bgm__Last	     (((ptr_musend-MusicIndex-4)/4)+bgm__First)
+#define bgm_GHZ	          0x81// (((ptr_mus81-MusicIndex)/4)+bgm__First)
+#define bgm_LZ		      0x82// (((ptr_mus82-MusicIndex)/4)+bgm__First)
+#define bgm_MZ		      0x83// (((ptr_mus83-MusicIndex)/4)+bgm__First)
+#define bgm_SLZ	          0x84// (((ptr_mus84-MusicIndex)/4)+bgm__First)
+#define bgm_SYZ	          0x85// (((ptr_mus85-MusicIndex)/4)+bgm__First)
+#define bgm_SBZ	          0x86// (((ptr_mus86-MusicIndex)/4)+bgm__First)
+#define bgm_Invincible	  0x87// (((ptr_mus87-MusicIndex)/4)+bgm__First)
+#define bgm_ExtraLife	  0x88// (((ptr_mus88-MusicIndex)/4)+bgm__First)
+#define bgm_SS		      0x89// (((ptr_mus89-MusicIndex)/4)+bgm__First)
+#define bgm_Title	      0x8A// (((ptr_mus8A-MusicIndex)/4)+bgm__First)
+#define bgm_Ending	      0x8B// (((ptr_mus8B-MusicIndex)/4)+bgm__First)
+#define bgm_Boss	      0x8C// (((ptr_mus8C-MusicIndex)/4)+bgm__First)
+#define bgm_FZ		      0x8D// (((ptr_mus8D-MusicIndex)/4)+bgm__First)
+#define bgm_GotThrough	  0x8E// (((ptr_mus8E-MusicIndex)/4)+bgm__First)
+#define bgm_GameOver	  0x8F// (((ptr_mus8F-MusicIndex)/4)+bgm__First)
+#define bgm_Continue	  0x90// (((ptr_mus90-MusicIndex)/4)+bgm__First)
+#define bgm_Credits	      0x91// (((ptr_mus91-MusicIndex)/4)+bgm__First)
+#define bgm_Drowning	  0x92// (((ptr_mus92-MusicIndex)/4)+bgm__First)
+#define bgm_Emerald	      0x93// (((ptr_mus93-MusicIndex)/4)+bgm__First)
+#define bgm__Last	      // (((ptr_musend-MusicIndex-4)/4)+bgm__First)
 
 // Sound effects
 #define sfx__First	     0xA0
-#define sfx_Jump	     ((ptr_sndA0-SoundIndex)/4)+sfx__First
-#define sfx_Lamppost	 ((ptr_sndA1-SoundIndex)/4)+sfx__First
-#define sfx_A2		     ((ptr_sndA2-SoundIndex)/4)+sfx__First
-#define sfx_Death	     ((ptr_sndA3-SoundIndex)/4)+sfx__First
-#define sfx_Skid	     ((ptr_sndA4-SoundIndex)/4)+sfx__First
-#define sfx_A5		     ((ptr_sndA5-SoundIndex)/4)+sfx__First
-#define sfx_HitSpikes	 ((ptr_sndA6-SoundIndex)/4)+sfx__First
-#define sfx_Push	     ((ptr_sndA7-SoundIndex)/4)+sfx__First
-#define sfx_SSGoal	     ((ptr_sndA8-SoundIndex)/4)+sfx__First
-#define sfx_SSItem	     ((ptr_sndA9-SoundIndex)/4)+sfx__First
-#define sfx_Splash	     ((ptr_sndAA-SoundIndex)/4)+sfx__First
-#define sfx_AB		     ((ptr_sndAB-SoundIndex)/4)+sfx__First
-#define sfx_HitBoss	     ((ptr_sndAC-SoundIndex)/4)+sfx__First
-#define sfx_Bubble	     ((ptr_sndAD-SoundIndex)/4)+sfx__First
-#define sfx_Fireball	 ((ptr_sndAE-SoundIndex)/4)+sfx__First
-#define sfx_Shield	     ((ptr_sndAF-SoundIndex)/4)+sfx__First
-#define sfx_Saw	         ((ptr_sndB0-SoundIndex)/4)+sfx__First
-#define sfx_Electric	 ((ptr_sndB1-SoundIndex)/4)+sfx__First
-#define sfx_Drown	     ((ptr_sndB2-SoundIndex)/4)+sfx__First
-#define sfx_Flamethrower ((ptr_sndB3-SoundIndex)/4)+sfx__First
-#define sfx_Bumper	     ((ptr_sndB4-SoundIndex)/4)+sfx__First
-#define sfx_Ring	     ((ptr_sndB5-SoundIndex)/4)+sfx__First
-#define sfx_SpikesMove	 ((ptr_sndB6-SoundIndex)/4)+sfx__First
-#define sfx_Rumbling	 ((ptr_sndB7-SoundIndex)/4)+sfx__First
-#define sfx_B8		     ((ptr_sndB8-SoundIndex)/4)+sfx__First
-#define sfx_Collapse	 ((ptr_sndB9-SoundIndex)/4)+sfx__First
-#define sfx_SSGlass	     ((ptr_sndBA-SoundIndex)/4)+sfx__First
-#define sfx_Door	     ((ptr_sndBB-SoundIndex)/4)+sfx__First
-#define sfx_Teleport	 ((ptr_sndBC-SoundIndex)/4)+sfx__First
-#define sfx_ChainStomp	 ((ptr_sndBD-SoundIndex)/4)+sfx__First
-#define sfx_Roll	     ((ptr_sndBE-SoundIndex)/4)+sfx__First
-#define sfx_Continue	 ((ptr_sndBF-SoundIndex)/4)+sfx__First
-#define sfx_Basaran	     ((ptr_sndC0-SoundIndex)/4)+sfx__First
-#define sfx_BreakItem	 ((ptr_sndC1-SoundIndex)/4)+sfx__First
-#define sfx_Warning	     ((ptr_sndC2-SoundIndex)/4)+sfx__First
-#define sfx_GiantRing	 ((ptr_sndC3-SoundIndex)/4)+sfx__First
-#define sfx_Bomb	     ((ptr_sndC4-SoundIndex)/4)+sfx__First
-#define sfx_Cash	     ((ptr_sndC5-SoundIndex)/4)+sfx__First
-#define sfx_RingLoss	 ((ptr_sndC6-SoundIndex)/4)+sfx__First
-#define sfx_ChainRise	 ((ptr_sndC7-SoundIndex)/4)+sfx__First
-#define sfx_Burning	     ((ptr_sndC8-SoundIndex)/4)+sfx__First
-#define sfx_Bonus	     ((ptr_sndC9-SoundIndex)/4)+sfx__First
-#define sfx_EnterSS	     ((ptr_sndCA-SoundIndex)/4)+sfx__First
-#define sfx_WallSmash	 ((ptr_sndCB-SoundIndex)/4)+sfx__First
-#define sfx_Spring	     ((ptr_sndCC-SoundIndex)/4)+sfx__First
-#define sfx_Switch	     ((ptr_sndCD-SoundIndex)/4)+sfx__First
-#define sfx_RingLeft	 ((ptr_sndCE-SoundIndex)/4)+sfx__First
-#define sfx_Signpost	 ((ptr_sndCF-SoundIndex)/4)+sfx__First
-#define sfx__Last	     ((ptr_sndend-SoundIndex-4)/4)+sfx__First
+#define sfx_Jump	     0xA0 // ((ptr_sndA0-SoundIndex)/4)+sfx__First
+#define sfx_Lamppost	 0xA1 // ((ptr_sndA1-SoundIndex)/4)+sfx__First
+#define sfx_A2		     0xA2 // ((ptr_sndA2-SoundIndex)/4)+sfx__First
+#define sfx_Death	     0xA3 // ((ptr_sndA3-SoundIndex)/4)+sfx__First
+#define sfx_Skid	     0xA4 // ((ptr_sndA4-SoundIndex)/4)+sfx__First
+#define sfx_A5		     0xA5 // ((ptr_sndA5-SoundIndex)/4)+sfx__First
+#define sfx_HitSpikes	 0xA6 // ((ptr_sndA6-SoundIndex)/4)+sfx__First
+#define sfx_Push	     0xA7 // ((ptr_sndA7-SoundIndex)/4)+sfx__First
+#define sfx_SSGoal	     0xA8 // ((ptr_sndA8-SoundIndex)/4)+sfx__First
+#define sfx_SSItem	     0xA9 // ((ptr_sndA9-SoundIndex)/4)+sfx__First
+#define sfx_Splash	     0xAA // ((ptr_sndAA-SoundIndex)/4)+sfx__First
+#define sfx_AB		     0xAB // ((ptr_sndAB-SoundIndex)/4)+sfx__First
+#define sfx_HitBoss	     0xAC // ((ptr_sndAC-SoundIndex)/4)+sfx__First
+#define sfx_Bubble	     0xAD // ((ptr_sndAD-SoundIndex)/4)+sfx__First
+#define sfx_Fireball	 0xAE // ((ptr_sndAE-SoundIndex)/4)+sfx__First
+#define sfx_Shield	     0xAF // ((ptr_sndAF-SoundIndex)/4)+sfx__First
+#define sfx_Saw	         0xB0 // ((ptr_sndB0-SoundIndex)/4)+sfx__First
+#define sfx_Electric	 0xB1 // ((ptr_sndB1-SoundIndex)/4)+sfx__First
+#define sfx_Drown	     0xB2 // ((ptr_sndB2-SoundIndex)/4)+sfx__First
+#define sfx_Flamethrower 0xB3 // ((ptr_sndB3-SoundIndex)/4)+sfx__First
+#define sfx_Bumper	     0xB4 // ((ptr_sndB4-SoundIndex)/4)+sfx__First
+#define sfx_Ring	     0xB5 // ((ptr_sndB5-SoundIndex)/4)+sfx__First
+#define sfx_SpikesMove	 0xB6 // ((ptr_sndB6-SoundIndex)/4)+sfx__First
+#define sfx_Rumbling	 0xB7 // ((ptr_sndB7-SoundIndex)/4)+sfx__First
+#define sfx_B8		     0xB8 // ((ptr_sndB8-SoundIndex)/4)+sfx__First
+#define sfx_Collapse	 0xB9 // ((ptr_sndB9-SoundIndex)/4)+sfx__First
+#define sfx_SSGlass	     0xBA // ((ptr_sndBA-SoundIndex)/4)+sfx__First
+#define sfx_Door	     0xBB // ((ptr_sndBB-SoundIndex)/4)+sfx__First
+#define sfx_Teleport	 0xBC // ((ptr_sndBC-SoundIndex)/4)+sfx__First
+#define sfx_ChainStomp	 0xBD // ((ptr_sndBD-SoundIndex)/4)+sfx__First
+#define sfx_Roll	     0xBE // ((ptr_sndBE-SoundIndex)/4)+sfx__First
+#define sfx_Continue	 0xBF // ((ptr_sndBF-SoundIndex)/4)+sfx__First
+#define sfx_Basaran	     0xC0 // ((ptr_sndC0-SoundIndex)/4)+sfx__First
+#define sfx_BreakItem	 0xC1 // ((ptr_sndC1-SoundIndex)/4)+sfx__First
+#define sfx_Warning	     0xC2 // ((ptr_sndC2-SoundIndex)/4)+sfx__First
+#define sfx_GiantRing	 0xC3 // ((ptr_sndC3-SoundIndex)/4)+sfx__First
+#define sfx_Bomb	     0xC4 // ((ptr_sndC4-SoundIndex)/4)+sfx__First
+#define sfx_Cash	     0xC5 // ((ptr_sndC5-SoundIndex)/4)+sfx__First
+#define sfx_RingLoss	 0xC6 // ((ptr_sndC6-SoundIndex)/4)+sfx__First
+#define sfx_ChainRise	 0xC7 // ((ptr_sndC7-SoundIndex)/4)+sfx__First
+#define sfx_Burning	     0xC8 // ((ptr_sndC8-SoundIndex)/4)+sfx__First
+#define sfx_Bonus	     0xC9 // ((ptr_sndC9-SoundIndex)/4)+sfx__First
+#define sfx_EnterSS	     0xCA // ((ptr_sndCA-SoundIndex)/4)+sfx__First
+#define sfx_WallSmash	 0xCB // ((ptr_sndCB-SoundIndex)/4)+sfx__First
+#define sfx_Spring	     0xCC // ((ptr_sndCC-SoundIndex)/4)+sfx__First
+#define sfx_Switch	     0xCD // ((ptr_sndCD-SoundIndex)/4)+sfx__First
+#define sfx_RingLeft	 0xCE // ((ptr_sndCE-SoundIndex)/4)+sfx__First
+#define sfx_Signpost	 0xCF // ((ptr_sndCF-SoundIndex)/4)+sfx__First
+#define sfx__Last	     0xen // ((ptr_sndend-SoundIndex-4)/4)+sfx__First
 
 // Special sound effects
 #define spec__First	     0xD0
@@ -404,17 +404,17 @@ enum {
 #define ArtTile_GHZ_Big_Flower_2	     ArtTile_Level+0x390
 #define ArtTile_GHZ_Spike_Pole		     0x398
 #define ArtTile_GHZ_Giant_Ball		     0x3AA
-#define ArtTile_GHZ_Purple_Rock	     0x3D0
+#define ArtTile_GHZ_Purple_Rock	         0x3D0
 
 // Marble Zone
-#define ArtTile_MZ_Block		 0x2B8
-#define ArtTile_MZ_Animated_Magma	 ArtTile_Level+0x2D2
-#define ArtTile_MZ_Animated_Lava	 ArtTile_Level+0x2E2
-#define ArtTile_MZ_Torch		 ArtTile_Level+0x2F2
-#define ArtTile_MZ_Spike_Stomper	 0x300
-#define ArtTile_MZ_Fireball		 0x345
-#define ArtTile_MZ_Glass_Pillar	 0x38E
-#define ArtTile_MZ_Lava		 0x3A8
+#define ArtTile_MZ_Block		        0x2B8
+#define ArtTile_MZ_Animated_Magma	    ArtTile_Level+0x2D2
+#define ArtTile_MZ_Animated_Lava	    ArtTile_Level+0x2E2
+#define ArtTile_MZ_Torch		        ArtTile_Level+0x2F2
+#define ArtTile_MZ_Spike_Stomper	    0x300
+#define ArtTile_MZ_Fireball		        0x345
+#define ArtTile_MZ_Glass_Pillar	        0x38E
+#define ArtTile_MZ_Lava		            0x3A8
 
 // Spring Yard Zone
 #define ArtTile_SYZ_Bumper		 0x380
@@ -600,28 +600,5 @@ enum {
 
 // Error Handler
 #define ArtTile_Error_Handler_Font	    0x7C0
-
-enum {
-    palid_SegaBG,
-    palid_Title,
-    palid_LevelSel,
-    palid_Sonic,
-    palid_GHZ,
-    palid_LZ,
-    palid_MZ,
-    palid_SLZ,
-    palid_SYZ,
-    palid_SBZ1,
-    palid_Special,
-    palid_LZWater,
-    palid_SBZ3,
-    palid_SBZ3Water,
-    palid_SBZ2,
-    palid_LZSonWater,
-    palid_SBZ3SonWat,
-    palid_SSResult,
-    palid_Continue,
-    palid_Ending,
-};
 
 #endif // __CLIONPROJECTS_SONIC_ANYWHERE_SRC2_CONSTANTS_H_

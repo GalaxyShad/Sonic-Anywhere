@@ -1,45 +1,53 @@
 #include "context.h"
 #include "include_backend/debug.h"
+#include "src/bytearray.h"
+#include "src/compressors.h"
 #include "src/resources/resourceid.h"
 #include "src/resources/resourcestore.h"
+#include "object_pointers.h"
+#include "pattern_load_cues.h"
+#include "palette_pointers.h"
 
-static void writeCRAM(void* SRC, void* SRC_END, size DST) {
-    NOT_IMPLEMENTED
+#include "macro.h"
+#include "src2/constants.h"
+
+static void NemDec(S1Context* ctx) { 
+    compressors__nemesis_decompress(
+        ctx->reg.a0, ctx->reg.a0int,
+
+        md_mem__vram()->plane_window_mut->arr  + ctx->vram_copy_to,
+        md_mem__vram()->plane_window_mut->size - ctx->vram_copy_to
+    );
+    md_vdp__set_name_table_location_for_plane(MD_VDP_PLANE__WINDOW, md_mem__vram()->plane_window_mut);
 }
-static void writeVRAM(void* SRC, void* SRC_END, size DST) {
-    NOT_IMPLEMENTED
+
+static void EniDec(S1Context* ctx) { 
+    compressors__enigma_decompress(
+        ctx->reg.a0, ctx->reg.a0int,
+        ctx->reg.a1, ctx->reg.a1int,
+        ctx->reg.d0
+    );
 }
 
-static void copyTilemap(void* src, size dst, size width, size height) { NOT_IMPLEMENTED }
-
-static void fillVRAM(u8 byte, void* start, void* end) { NOT_IMPLEMENTED }
-
-static void clearRAM(void* start, void* end) { NOT_IMPLEMENTED }
-
-static void locVRAM(size loc, size controlport) { NOT_IMPLEMENTED }
-
-#define make_art_tile(ADDR, PAL, PRI) (((PRI&1)<<15)|((PAL&3)<<13)|ADDR)
-
-#define VDP_CONTROL_PORT_READ() 0
-#define VDP_CONTROL_PORT_WRITE(X)
-#define VDP_DATA_PORT_WRITE(X)
-
-#define PORT_WRITE(ADR, X)
-#define PORT_READ(ADR) 0
-
-#define startZ80
-#define stopZ80
-#define waitZ80
-
-#define enable_ints
-#define disable_ints
-
-static void NemDec(S1Context* ctx) { NOT_IMPLEMENTED }
-static void EniDec(S1Context* ctx) { NOT_IMPLEMENTED }
+static void LevSelControls(S1Context* ctx);
+static void PaletteCycle(S1Context* ctx) { NOT_IMPLEMENTED }
+static void LevSel_ChgLine(S1Context* ctx);
+static void LevSel_ChgSnd(S1Context* ctx);
+static void LevSelTextLoad(S1Context* ctx);
+static void ExecuteObjects(S1Context* ctx) { NOT_IMPLEMENTED }
+static void BuildSprites(S1Context* ctx) { NOT_IMPLEMENTED }
+static void LevelSizeLoad(S1Context* ctx) { NOT_IMPLEMENTED }
+static void DeformLayers(S1Context* ctx) { NOT_IMPLEMENTED }
+static void KosDec(S1Context* ctx) { NOT_IMPLEMENTED }
+static void LevelLayoutLoad(S1Context* ctx) { NOT_IMPLEMENTED }
+static void DrawChunks(S1Context* ctx) { NOT_IMPLEMENTED }
+static void PalCycle_Title(S1Context* ctx) { NOT_IMPLEMENTED }
 
 static void WhiteIn_DecColour(S1Context* ctx);
 static void WhiteIn_FromWhite(S1Context* ctx);
-static void PlaySound_Special(S1Context* ctx) { NOT_IMPLEMENTED }
+static void PlaySound_Special(S1Context* ctx) { 
+    ON_PLAY_SOUND_SPECIAL(ctx->reg.d0);
+}
 static void WhiteOut_ToWhite(S1Context* ctx);
 static void FadeOut_DecColour(S1Context* ctx);
 static void FadeOut_ToBlack(S1Context* ctx);
@@ -60,7 +68,7 @@ static void LoadTilesAsYouMove_BGOnly(S1Context* ctx) {
 }
 
 static void GM_Sega(S1Context* ctx);
-static void GM_Title(S1Context* ctx) { NOT_IMPLEMENTED }
+static void GM_Title(S1Context* ctx);
 static void GM_Level(S1Context* ctx) { NOT_IMPLEMENTED }
 static void GM_Special(S1Context* ctx) { NOT_IMPLEMENTED }
 static void GM_Cont(S1Context* ctx) { NOT_IMPLEMENTED }
@@ -204,9 +212,9 @@ static void VBla_00(S1Context* ctx) {
 
     // is water above top of screen?
     if (ctx->var->f_wtr_state) {
-        writeCRAM(ctx->var->v_palette, ctx->varptr->v_palette_end, 0);
+        writeCRAM(ctx, ctx->var->v_palette, ctx->varptr->v_palette_end, 0);
     } else {
-        writeCRAM(ctx->var->v_palette_water, ctx->varptr->v_palette_water_end, 0);
+        writeCRAM(ctx, ctx->var->v_palette_water, ctx->varptr->v_palette_water_end, 0);
     }
 
     // TODO move.w	(v_hbla_hreg).w,(a5)
@@ -266,9 +274,9 @@ static void VBla_08(S1Context* ctx) {
 
     ReadJoypads(ctx);
     if (ctx->var->f_wtr_state == 0) {
-        writeCRAM(ctx->var->v_palette, ctx->varptr->v_palette_end, 0);
+        writeCRAM(ctx, ctx->var->v_palette, ctx->varptr->v_palette_end, 0);
     } else {
-        writeCRAM(ctx->var->v_palette_water, ctx->varptr->v_palette_water_end, 0);
+        writeCRAM(ctx, ctx->var->v_palette_water, ctx->varptr->v_palette_water_end, 0);
     }
 
     // TODO move.w	(v_hbla_hreg).w,(a5)
@@ -342,7 +350,7 @@ static void VBla_0A(S1Context* ctx) {
 
     ReadJoypads(ctx);
 
-    writeCRAM(ctx->var->v_palette, ctx->varptr->v_palette_end, 0);
+    writeCRAM(ctx, ctx->var->v_palette, ctx->varptr->v_palette_end, 0);
     writeVRAM(ctx->var->v_spritetablebuffer, ctx->varptr->v_spritetablebuffer_end, vram_sprites);
     writeVRAM(ctx->var->v_hscrolltablebuffer, ctx->varptr->v_hscrolltablebuffer_end, vram_hscroll);
 
@@ -367,9 +375,9 @@ static void VBla_0C(S1Context* ctx) {
 
     ReadJoypads(ctx);
     if (ctx->var->f_wtr_state == 0) {
-        writeCRAM(ctx->var->v_palette, ctx->varptr->v_palette_end, 0);
+        writeCRAM(ctx, ctx->var->v_palette, ctx->varptr->v_palette_end, 0);
     } else {
-        writeCRAM(ctx->var->v_palette_water, ctx->varptr->v_palette_water_end, 0);
+        writeCRAM(ctx, ctx->var->v_palette_water, ctx->varptr->v_palette_water_end, 0);
     }
 
     // TODO move.w	(v_hbla_hreg).w,(a5)
@@ -428,7 +436,7 @@ static void VBla_16(S1Context* ctx) {
     waitZ80;
 
     ReadJoypads(ctx);
-    writeCRAM(ctx->var->v_palette, ctx->varptr->v_palette_end, 0);
+    writeCRAM(ctx, ctx->var->v_palette, ctx->varptr->v_palette_end, 0);
     writeVRAM(ctx->var->v_spritetablebuffer, ctx->varptr->v_spritetablebuffer_end, vram_sprites);
     writeVRAM(ctx->var->v_hscrolltablebuffer, ctx->varptr->v_hscrolltablebuffer_end, vram_hscroll);
 
@@ -452,9 +460,9 @@ static void sub_106E(S1Context* ctx) {
     ReadJoypads(ctx);
 
     if (ctx->var->f_wtr_state == 0) {
-        writeCRAM(ctx->var->v_palette, ctx->varptr->v_palette_end, 0);
+        writeCRAM(ctx, ctx->var->v_palette, ctx->varptr->v_palette_end, 0);
     } else {
-        writeCRAM(ctx->var->v_palette_water, ctx->varptr->v_palette_water_end, 0);
+        writeCRAM(ctx, ctx->var->v_palette_water, ctx->varptr->v_palette_water_end, 0);
     }
 
     startZ80;
@@ -628,7 +636,7 @@ static void AddPLC(S1Context* ctx, u32 d0) { NOT_IMPLEMENTED }
 //         (or if you change the size of Plc_Buffer, the limit becomes (Plc_Buffer_Only_End-Plc_Buffer)/6)
 
 // LoadPLC2:
-static void NewPLC(S1Context* ctx, u32 d0) { NOT_IMPLEMENTED }
+static void NewPLC(S1Context* ctx) { NOT_IMPLEMENTED }
 
 // ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
 
@@ -1006,7 +1014,7 @@ static void WhiteOut_AddColour(S1Context* ctx) {
 
 // ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
 
-static int PalCycle_Sega(S1Context* ctx) {
+static void PalCycle_Sega(S1Context* ctx) {
     const u8* Pal_Sega1 = s_resource(RESOURCE__PALETTE__SEGA1_BIN).arr;
     const u8* Pal_Sega2 = s_resource(RESOURCE__PALETTE__SEGA2_BIN).arr;
     
@@ -1039,13 +1047,16 @@ loc_2034:
     if (ctx->reg.d0 >= 0x60) {
         goto loc_203E;
     }
+
+    u16 col = *((u16*)ctx->reg.a0);
+
     *((u16*)(ctx->reg.a1 + ctx->reg.d0)) = *((u16*)ctx->reg.a0);
     ctx->reg.a0 += 2;
 
 loc_203E:
     ctx->reg.d0 += 2;
-    ctx->reg.d1--;
     if (ctx->reg.d1 != 0) {
+        ctx->reg.d1--;
         goto loc_202A;
     }
 
@@ -1065,17 +1076,19 @@ loc_2054:
 
 loc_2062:
     ctx->var->v_pcyc_num = ctx->reg.d0;
-    return 1;
+    ctx->reg.d0 = 1;
+    return;
 
 loc_206A:
-    ctx->var->v_pcyc_time--;
-    if (ctx->var->v_pcyc_time >= 0) {
+    ctx->var->v_pcyc_time -= 0x0100;
+    if ((ctx->var->v_pcyc_time) >= 0) {    
         goto loc_20BC;
     }
-    ctx->var->v_pcyc_time = 4;
+    ctx->var->v_pcyc_time = 0x0401;
     ctx->reg.d0 = ctx->var->v_pcyc_num + 0xC;
     if (ctx->reg.d0 >= 0x30) {
-        return 0;
+        ctx->reg.d0 = 0;
+        return;
     }
 
     ctx->var->v_pcyc_num = ctx->reg.d0;
@@ -1102,8 +1115,8 @@ loc_20A8:
 loc_20B2:
     *((u16*)(ctx->reg.a1 + ctx->reg.d0)) = *((u16*)ctx->reg.a0);
     ctx->reg.d0 += 2;
-    ctx->reg.d1--;
     if (ctx->reg.d1 != 0) {
+        ctx->reg.d1--;
         goto loc_20A8;
     }
 
@@ -1123,6 +1136,31 @@ loc_20BC:
 static void PalLoad_Fade(S1Context* ctx) {
     NOT_IMPLEMENTED
     return;
+
+    // ---------------------------------------------------------------------------
+    // Palette data
+    // ---------------------------------------------------------------------------
+
+    // ReadonlyByteArray Pal_SegaBG = s_resource(RESOURCE__PALETTE__SEGA_BACKGROUND_BIN);
+    // ReadonlyByteArray Pal_Title = s_resource(RESOURCE__PALETTE__TITLE_SCREEN_BIN);
+    // ReadonlyByteArray Pal_LevelSel = s_resource(RESOURCE__PALETTE__LEVEL_SELECT_BIN);
+    // ReadonlyByteArray Pal_Sonic = s_resource(RESOURCE__PALETTE__SONIC_BIN);
+    // ReadonlyByteArray Pal_GHZ = s_resource(RESOURCE__PALETTE__GREEN_HILL_ZONE_BIN);
+    // ReadonlyByteArray Pal_LZ = s_resource(RESOURCE__PALETTE__LABYRINTH_ZONE_BIN);
+    // ReadonlyByteArray Pal_LZWater = s_resource(RESOURCE__PALETTE__LABYRINTH_ZONE_UNDERWATER_BIN);
+    // ReadonlyByteArray Pal_MZ = s_resource(RESOURCE__PALETTE__MARBLE_ZONE_BIN);
+    // ReadonlyByteArray Pal_SLZ = s_resource(RESOURCE__PALETTE__STAR_LIGHT_ZONE_BIN);
+    // ReadonlyByteArray Pal_SYZ = s_resource(RESOURCE__PALETTE__SPRING_YARD_ZONE_BIN);
+    // ReadonlyByteArray Pal_SBZ1 = s_resource(ResourceID res_id)
+    // ReadonlyByteArray Pal_SBZ2 =
+    // ReadonlyByteArray Pal_Special =
+    // ReadonlyByteArray Pal_SBZ3 =
+    // ReadonlyByteArray Pal_SBZ3Water =
+    // ReadonlyByteArray Pal_LZSonWater =
+    // ReadonlyByteArray Pal_SBZ3SonWat =
+    // ReadonlyByteArray Pal_SSResult =
+    // ReadonlyByteArray Pal_Continue =
+    // ReadonlyByteArray Pal_Ending =
 
     // Load palette pointers base address into a1
     // ctx->reg.a1 = (u8*)PalPointers;
@@ -1190,6 +1228,9 @@ static void WaitForVBla(S1Context* ctx) {
 // ---------------------------------------------------------------------------
 
 static void GM_Sega(S1Context* ctx) {
+    ReadonlyByteArray Eni_SegaLogo = s_resource(RESOURCE__TILEMAPS__SEGA_LOGO_ENI);
+    ReadonlyByteArray Nem_SegaLogo = s_resource(RESOURCE__ARTNEM__SEGA_LOGO_NEM);
+
     ctx->reg.d0 = bgm_Stop;
     PlaySound_Special(ctx); // stop music
 
@@ -1210,17 +1251,23 @@ static void GM_Sega(S1Context* ctx) {
 
     ClearScreen(ctx);
 
+    // FIXME
+    for (u8* i = ctx->var->v_palette; i != ctx->varptr->v_palette_end; i++) {
+        *i = 0xFF;
+    }
+
+    // TODO
     locVRAM(ArtTile_Sega_Tiles*tile_size, vdp_control_port);
-    ctx->reg.a0 = s_resource(RESOURCE__ARTNEM__SEGA_LOGO_NEM).arr;
+    ctx->reg.a0 = Nem_SegaLogo.arr; ctx->reg.a0int = Nem_SegaLogo.size;
     NemDec(ctx);
 
-    ctx->reg.a1 = ctx->var->v_256x256;
-    ctx->reg.a0 = s_resource(RESOURCE__TILEMAPS__SEGA_LOGO_ENI).arr;
+    ctx->reg.a1 = ctx->var->v_256x256;  ctx->reg.a1int = ctx->varptr->v_256x256_end - ctx->var->v_256x256;
+    ctx->reg.a0 = Eni_SegaLogo.arr;     ctx->reg.a0int = Eni_SegaLogo.size;
     ctx->reg.d0 = make_art_tile(ArtTile_Sega_Tiles, 0, 0);
     EniDec(ctx);
 
-    copyTilemap(ctx->var->v_256x256, vram_bg+0x510, 24, 8);
-    copyTilemap(ctx->var->v_256x256+24*8*2, vram_fg, 40, 28);
+    copyTilemapXY(ctx->var->v_256x256, vram_bg, 8, 0xA, 24, 8);
+    copyTilemapXY(ctx->var->v_256x256+24*8*2, vram_fg, 0, 0, 40, 28);
 
     // loadPal
     ctx->reg.d0 = palid_SegaBG;
@@ -1258,4 +1305,741 @@ static void GM_Sega(S1Context* ctx) {
 
     // Sega_GotoTitle
     ctx->var->v_gamemode = id_Title;
+}
+
+// ===========================================================================
+
+// ---------------------------------------------------------------------------
+// Title	screen
+// ---------------------------------------------------------------------------
+
+static void GM_Title(S1Context* ctx) {
+    ReadonlyByteArray Nem_JapNames    = s_resource(RESOURCE__ARTNEM__HIDDEN_JAPANESE_CREDITS_NEM);
+    ReadonlyByteArray Nem_CreditText  = s_resource(RESOURCE__ARTNEM__ENDING_CREDITS_NEM);
+    ReadonlyByteArray Eni_JapNames    = s_resource(RESOURCE__TILEMAPS__HIDDEN_JAPANESE_CREDITS_ENI);
+    
+    ReadonlyByteArray Nem_TitleFg     = s_resource(RESOURCE__ARTNEM__TITLE_SCREEN_FOREGROUND_NEM);
+    ReadonlyByteArray Nem_TitleSonic  = s_resource(RESOURCE__ARTNEM__TITLE_SCREEN_SONIC_NEM);
+    ReadonlyByteArray Nem_TitleTM     = s_resource(RESOURCE__ARTNEM__TITLE_SCREEN_TM_NEM);
+
+    u8* Art_Text = s_resource(RESOURCE__ARTUNC__MENUTEXT_BIN).arr;
+    u8* Art_Text_End = Art_Text + s_resource(RESOURCE__ARTUNC__MENUTEXT_BIN).size + 1;
+
+    ReadonlyByteArray Blk16_GHZ = s_resource(RESOURCE__MAP16__GHZ_ENI);
+    ReadonlyByteArray Nem_GHZ_1st = s_resource(RESOURCE__ARTNEM__8X8_GHZ1_NEM);
+    u8* Blk256_GHZ = s_resource(RESOURCE__MAP256__GHZ_KOS).arr;
+
+    ReadonlyByteArray Eni_Title = s_resource(RESOURCE__TILEMAPS__TITLE_SCREEN_ENI);
+
+    // ===========================================================================
+    // ---------------------------------------------------------------------------
+    // Levels used in demos
+    // ---------------------------------------------------------------------------
+    u8* Demo_Levels = s_resource(RESOURCE__MISC__DEMO_LEVEL_ORDER_INTRO_BIN).arr;
+
+    ctx->reg.d0 = bgm_Stop;
+    PlaySound_Special(ctx); // stop music
+    ClearPLC(ctx);
+    PaletteFadeOut(ctx);
+    disable_ints;
+    DACDriverLoad(ctx);
+
+    VDP_CONTROL_PORT_WRITE(0x8004);                 // 8-colour mode
+    VDP_CONTROL_PORT_WRITE(0x8200+(vram_fg>>10));   // set foreground nametable address
+    VDP_CONTROL_PORT_WRITE(0x8400+(vram_bg>>13));   // set background nametable address
+    VDP_CONTROL_PORT_WRITE(0x9001);                 // 64-cell hscroll size
+    VDP_CONTROL_PORT_WRITE(0x9200);                 // window vertical position
+    VDP_CONTROL_PORT_WRITE(0x8B03);
+    VDP_CONTROL_PORT_WRITE(0x8720);                 // set background colour (palette line 2, entry 0)
+
+    ctx->var->f_wtr_state = 0;
+    ClearScreen(ctx);
+
+    clearRAM(ctx->var->v_objspace, ctx->varptr->v_objspace_end);
+
+    locVRAM(ArtTile_Title_Japanese_Text*tile_size, vdp_control_port);
+    ctx->reg.a0 = Nem_JapNames.arr; ctx->reg.a0int = Nem_JapNames.size; // load Japanese credits
+    NemDec(ctx);
+    locVRAM(ArtTile_Sonic_Team_Font*tile_size, vdp_control_port);
+    ctx->reg.a0 = Nem_CreditText.arr; ctx->reg.a0int = Nem_CreditText.size; // load alphabet
+    NemDec(ctx);
+    ctx->reg.a1 = ctx->var->v_256x256; ctx->reg.a1int = ctx->varptr->v_256x256_end - ctx->var->v_256x256;
+    ctx->reg.a0 = Eni_JapNames.arr;    ctx->reg.a0int = Eni_JapNames.size; // load mappings for	Japanese credits
+    ctx->reg.d0 = make_art_tile(ArtTile_Title_Japanese_Text, 0, 0);
+    EniDec(ctx);
+
+    copyTilemapXY(ctx->var->v_256x256, vram_fg, 0, 0, 40, 28);
+
+    clearRAM(ctx->var->v_palette_fading, ctx->varptr->v_palette_fading_end);
+
+    ctx->reg.d0 = palid_Sonic; // load Sonic's palette
+    PalLoad_Fade(ctx);
+    ctx->varptr->v_sonicteam[0] = id_CreditsText; // load "SONIC TEAM PRESENTS" object
+    ExecuteObjects(ctx);
+    BuildSprites(ctx);
+    PaletteFadeIn(ctx);
+    disable_ints;
+    locVRAM(ArtTile_Title_Foreground*tile_size, vdp_control_port);
+    ctx->reg.a0 = Nem_TitleFg.arr; ctx->reg.a0int = Nem_TitleFg.size; // load title	screen patterns
+    NemDec(ctx);
+    locVRAM(ArtTile_Title_Sonic*tile_size, vdp_control_port);
+    ctx->reg.a0 = Nem_TitleSonic.arr; ctx->reg.a0int = Nem_TitleSonic.size; // load Sonic title screen	patterns
+    NemDec(ctx);
+    locVRAM(ArtTile_Title_Trademark*tile_size, vdp_control_port);
+    ctx->reg.a0 = Nem_TitleTM.arr; ctx->reg.a0int = Nem_TitleTM.size; // load "TM" patterns
+    NemDec(ctx);
+    // lea	(vdp_data_port).l,a6
+    locVRAM(ArtTile_Level_Select_Font*tile_size, 4 + vdp_data_port);
+    ctx->reg.a5 = Art_Text;
+    ctx->reg.d1 = (Art_Text_End-Art_Text)/2-1;
+
+    // Tit_LoadText:
+    do {
+        VDP_DATA_PORT_WRITE( *((u16*)ctx->reg.a5) );
+        ctx->reg.a5 += 2;
+        ctx->reg.d1--;
+    } while (ctx->reg.d1 != 0);
+
+    ctx->var->v_lastlamp[0] = 0; // clear lamppost counter
+    ctx->var->v_debuguse = 0; // disable debug item placement mode
+    ctx->var->f_demo = 0; // disable debug mode
+    ctx->var->v_unused2 = 0; // unused variable
+    ctx->var->v_zone = id_GHZ << 8; // set level to GHZ (00)
+    ctx->var->v_pcyc_time = 0; // disable palette cycling
+    LevelSizeLoad(ctx);
+    DeformLayers(ctx);
+    ctx->reg.a1 = ctx->var->v_16x16;    ctx->reg.a1int = 0x1800;
+    ctx->reg.a0 = Blk16_GHZ.arr;        ctx->reg.a0int = Blk16_GHZ.size;  // load GHZ 16x16 mappings
+    ctx->reg.d0 = make_art_tile(ArtTile_Level, 0, 0);
+    EniDec(ctx);
+    ctx->reg.a0 = Blk256_GHZ; // load GHZ 256x256 mapping
+    ctx->reg.a1 = ctx->var->v_256x256;
+    KosDec(ctx);
+    LevelLayoutLoad(ctx);
+    PaletteFadeOut(ctx);
+    disable_ints;
+    ClearScreen(ctx);
+    // lea	(vdp_control_port).l,a5
+    // lea	(vdp_data_port).l,a6
+    // lea	(v_bgscreenposx).w,a3
+    // lea	(v_lvllayout+$40).w,a4
+    ctx->reg.d2 = 0x6000;
+    DrawChunks(ctx);
+    ctx->reg.a1 = ctx->var->v_256x256; ctx->reg.a1int = ctx->varptr->v_256x256_end - ctx->var->v_256x256;
+    ctx->reg.a0 = Eni_Title.arr;       ctx->reg.a0int = Eni_Title.size; // load title screen mappings
+    ctx->reg.d0 = 0;
+    EniDec(ctx);
+
+    copyTilemapXY(ctx->var->v_256x256, vram_fg, 3, 4, 34, 22);
+
+    locVRAM(ArtTile_Level*tile_size, vdp_control_port);
+    ctx->reg.a0 = Nem_GHZ_1st.arr; ctx->reg.a0int = Nem_GHZ_1st.size;  // load GHZ patterns
+    NemDec(ctx);
+    ctx->reg.d0 = palid_Title; // load title screen palette
+    PalLoad_Fade(ctx);
+    ctx->reg.d0 = bgm_Title;
+    PlaySound_Special(ctx); // play title screen music
+    ctx->var->f_debugmode = 0; // disable debug mode
+    ctx->var->v_demolength = 0x178; // run title screen for 0x178 frames
+
+#ifdef FixBugs
+    clearRAM(ctx->varptr->v_sonicteam, ctx->varptr->v_sonicteam+object_size);
+#else
+    // Bug: this only clears half of the "SONIC TEAM PRESENTS" slot.
+    // This is responsible for why the "PRESS START BUTTON" text doesn't
+    // show up, as the routine ID isn't reset.
+    clearRAM(ctx->varptr->v_sonicteam, ctx->varptr->v_sonicteam+object_size / 2);
+#endif
+
+    ctx->varptr->v_titlesonic[0] = id_TitleSonic; // load big Sonic object
+    ctx->varptr->v_pressstart[0] = id_PSBTM; // load "PRESS START BUTTON" object
+    // ctx->varptr->v_pressstart[obRoutine] = 0; // The 'Mega Games 10' version of Sonic 1 added this line, to fix the 'PRESS START BUTTON' object not appearing
+
+#if Revision != 0
+    if (ctx->var->v_megadrive) {    // is console Japanese?
+        goto GM_Title__isjap;       
+    }
+#endif
+
+    ctx->var->v_megadrive = id_PSBTM; // load "TM" object
+    ctx->varptr->v_titletm[obFrame] = 3;
+GM_Title__isjap:
+    ctx->varptr->v_ttlsonichide[obFrame] = 2;
+    ExecuteObjects(ctx);
+    DeformLayers(ctx);
+    BuildSprites(ctx);
+    ctx->reg.d0 = plcid_Main;
+    NewPLC(ctx);
+    ctx->var->v_title_dcount = 0;
+    ctx->var->v_title_ccount = 0;
+    ctx->reg.d0 = ctx->var->v_vdp_buffer1;
+    ctx->reg.d0 |= 0x40;
+    VDP_CONTROL_PORT_WRITE(ctx->reg.d0);
+    PaletteFadeIn(ctx);
+
+Tit_MainLoop:
+    ctx->var->v_vbla_routine = 4;
+    WaitForVBla(ctx);
+    ExecuteObjects(ctx);
+    DeformLayers(ctx);
+    BuildSprites(ctx);
+    PalCycle_Title(ctx);
+    RunPLC(ctx);
+    ctx->reg.d0 = (ctx->varptr->v_player[obX] << 8) | ctx->varptr->v_player[obX + 1]; // move Sonic to the right
+    // has Sonic object passed $1C00 on x-axis?
+    if (ctx->reg.d0 >= 0x1C00) {
+        ctx->var->v_gamemode = id_Sega; // go to Sega Screen
+        return;
+    }
+
+    // ===========================================================================
+
+    // ---------------------------------------------------------------------------
+    // Level	select codes
+    // ---------------------------------------------------------------------------
+    
+#if Revision == 0
+    const u8 LevSelCode_J[] = { btnUp, btnDn, btnL, btnR, 0, 0xFF };
+#else 
+    const u8 LevSelCode_J[] = { btnUp, btnDn, btnDn, btnDn, btnL, btnR, 0, 0xFF };
+#endif
+
+    const u8 LevSelCode_US[] = { btnUp, btnDn, btnL, btnR, 0, 0xFF };
+
+
+    // Tit_ChkRegion:
+    // check	if the machine is US or	Japanese
+    if (ctx->var->v_megadrive != 0) {
+        ctx->reg.a0 = LevSelCode_US; // load US code
+    } else {
+        ctx->reg.a0 = LevSelCode_J; // load J code
+    }
+
+    // Tit_EnterCheat
+    ctx->reg.d0 = ctx->var->v_title_dcount;
+    ctx->reg.a0 += ctx->reg.d0;
+    ctx->reg.d0 = ctx->var->v_jpadpress1; // get button press
+    ctx->reg.d0 &= btnDir; // read only UDLR buttons
+    if (*ctx->reg.a0 != ctx->reg.d0) {
+        goto Tit_ResetCheat;
+    }
+    
+    ctx->var->v_title_dcount += 1; // next button press
+    if (ctx->reg.d0 != 0) {
+        goto Tit_CountC;
+    }
+    ctx->reg.a0 = &(ctx->var->f_levselcheat);
+    ctx->reg.d1 = ctx->var->v_title_ccount;
+    ctx->reg.d1 >>= 1;
+    ctx->reg.d1 &= 3;
+    if (ctx->reg.d1 == 0) {
+        goto Tit_PlayRing;
+    }
+
+    if (ctx->var->v_megadrive) {
+        goto Tit_PlayRing;
+    }
+
+    ctx->reg.d1 = 1;
+    ctx->reg.a0[1 + ctx->reg.d1] = ctx->reg.d1; // cheat depends on how many times C is pressed
+
+Tit_PlayRing:
+    ctx->reg.a0[ctx->reg.d1] = 1; // activate cheat
+    ctx->reg.d0 = sfx_Ring;
+    PlaySound_Special(ctx);
+    goto Tit_CountC;
+// ===========================================================================
+
+Tit_ResetCheat:
+    if (ctx->reg.d0 == 0) {
+        goto Tit_CountC;
+    }
+    if (ctx->var->v_title_dcount == 9) {
+        goto Tit_CountC;
+    }
+    ctx->var->v_title_dcount = 0;
+
+Tit_CountC:
+    ctx->reg.d0 = ctx->var->v_jpadpress1;
+    ctx->reg.d0 &= btnC;
+    if (ctx->reg.d0 != 0) {
+        ctx->var->v_title_ccount++;
+    }
+
+    // loc_3230
+    if (ctx->var->v_demolength == 0) {
+        goto GotoDemo;
+    }
+    ctx->var->v_jpadpress1 &= btnStart; // check if Start pressed
+    if (ctx->var->v_jpadpress1 == 0) {
+        goto Tit_MainLoop;
+    }
+
+Tit_ChkLevSel:
+    // check if level select code is on
+    if (ctx->var->f_levselcheat == 0) {
+        goto PlayLevel;
+    }
+    // check if A is pressed
+    if ((ctx->var->v_jpadhold1 & bitA) == 0) {
+        goto PlayLevel;
+    }
+
+    ctx->reg.d0 = palid_LevelSel;
+    PalLoad(ctx); // load level select palette
+   
+    clearRAM(ctx->var->v_hscrolltablebuffer, ctx->varptr->v_hscrolltablebuffer_end);
+
+    ctx->var->v_scrposy_vdp = ctx->reg.d0;
+    disable_ints;
+    // move.l	d0,(v_scrposy_vdp).w
+    locVRAM(vram_bg, vdp_control_port);
+    ctx->reg.d1 = plane_size_64x32/4 - 1;
+    
+// Tit_ClrScroll2
+    do {
+        VDP_DATA_PORT_WRITE(ctx->reg.d0);
+        ctx->reg.d1--;
+    } while (ctx->reg.d1 != 0); // clear scroll data (in VRAM)
+
+    LevSelTextLoad(ctx);
+
+// ---------------------------------------------------------------------------
+// Level	Select
+// ---------------------------------------------------------------------------
+
+LevelSelect:
+    ctx->var->v_vbla_routine = 4;
+    WaitForVBla(ctx);
+    LevSelControls(ctx);
+    RunPLC(ctx);
+    if (*((u16*)ctx->var->v_plc_buffer) != 0) {
+        goto LevelSelect;
+    }
+    ctx->var->v_jpadpress1 = btnABC+btnStart; // is A, B, C, or Start pressed?
+    if (ctx->var->v_jpadpress1 != 0) {
+        goto LevelSelect;
+    }
+    ctx->reg.d0 = ctx->var->v_levselitem;
+    // have you selected item $14 (sound test)?
+    if (ctx->reg.d0 != 0x14) {
+        goto LevSel_Level_SS;
+    }
+    ctx->reg.d0 += 0x80;
+    // is Japanese Credits cheat on?
+    if (ctx->var->f_creditscheat == 0) {
+        goto LevSel_NoCheat;
+    }
+    // is sound $9F being played?
+    if (ctx->reg.d0 == 0x9F) {
+        goto LevSel_Credits;
+    }
+
+LevSel_NoCheat:
+    // This is a workaround for a bug; see PlaySoundID for more.
+    // Once you've fixed the bugs there, comment these four instructions out.
+    if (ctx->reg.d0 < bgm__Last+1) {
+        goto LevSel_PlaySnd;
+    }
+    if (ctx->reg.d0 < sfx__First) {
+        goto LevelSelect;
+    }
+
+LevSel_PlaySnd:
+    PlaySound_Special(ctx);
+    goto LevelSelect;
+
+// ===========================================================================
+
+LevSel_Ending:
+    ctx->var->v_gamemode = id_Ending; // set screen mode to $18 (Ending)
+    ctx->var->v_zone = id_EndZ << 8; 
+    return;
+// ===========================================================================
+
+LevSel_Credits:
+    ctx->var->v_gamemode = id_Credits; // set screen mode to $1C (Credits)
+    ctx->reg.d0 = bgm_Credits;
+    PlaySound_Special(ctx);
+    return;
+// ===========================================================================
+
+LevSel_Level_SS:
+    ctx->reg.d0 += ctx->reg.d0;
+    // ctx->reg.d0 = LevSel_Ptrs; 
+    if (ctx->reg.d0 < 0) {
+        goto LevelSelect;
+    }
+    
+    // check if level is 0700 (Special Stage)
+    if (ctx->reg.d0 != id_SS*0x100) {
+        goto LevSel_Level;
+    }
+
+    ctx->var->v_gamemode = id_Special; // set screen mode to 0x10 (Special Stage)
+    ctx->var->v_zone = 0; // clear level
+    ctx->var->v_lives = 3; // set lives to 3
+    ctx->reg.d0 = 0;
+    ctx->var->v_rings = ctx->reg.d0; // clear rings
+    ctx->var->v_time = ctx->reg.d0;  // clear time
+    ctx->var->v_score = ctx->reg.d0; // clear score
+#if Revision != 0
+    ctx->var->v_scorelife = 0x5000; // extra life is awarded at 50_000 points
+#endif
+    return;
+// ===========================================================================
+
+LevSel_Level:
+    ctx->reg.d0 &= 0x3FFF;
+    ctx->var->v_zone = ctx->reg.d0; // set level number
+
+PlayLevel:
+    ctx->var->v_gamemode = id_Level;    // set screen mode to $0C (level)
+    ctx->var->v_lives = 3;              // set lives to 3
+    ctx->reg.d0 = 0;    
+    ctx->var->v_rings = ctx->reg.d0;    // clear rings  
+    ctx->var->v_time = ctx->reg.d0;     // clear time
+    ctx->var->v_score = ctx->reg.d0;    // clear score
+    ctx->var->v_lastspecial = ctx->reg.d0;  // clear special stage number
+    ctx->var->v_emeralds = ctx->reg.d0;     // clear emeralds
+    *((u32*)ctx->var->v_emldlist) = ctx->reg.d0;    // clear emeralds
+    *((u32*)(ctx->var->v_emldlist + 4)) = ctx->reg.d0;  // clear emeralds
+    ctx->var->v_continues = ctx->reg.d0;  // clear continues
+#if Revision != 0
+    ctx->var->v_scorelife = 0x5000; // extra life is awarded at 50000 points
+#endif
+    ctx->reg.d0 = bgm_Fade;
+    PlaySound_Special(ctx);
+    return;
+
+    const u8 LevSel_Ptrs[] = {
+#if Revision == 0
+        // old level order
+        id_GHZ, 0,
+		id_GHZ, 1,
+		id_GHZ, 2,
+		id_LZ, 0,
+		id_LZ, 1,
+		id_LZ, 2,
+		id_MZ, 0,
+		id_MZ, 1,
+		id_MZ, 2,
+		id_SLZ, 0,
+		id_SLZ, 1,
+		id_SLZ, 2,
+		id_SYZ, 0,
+		id_SYZ, 1,
+		id_SYZ, 2,
+		id_SBZ, 0,
+		id_SBZ, 1,
+		id_LZ, 3,		// Scrap Brain Zone 3
+		id_SBZ, 2,		// Final Zone
+#else 
+        // correct level order
+        id_GHZ, 0,
+		id_GHZ, 1,
+		id_GHZ, 2,
+		id_MZ, 0,
+		id_MZ, 1,
+		id_MZ, 2,
+		id_SYZ, 0,
+		id_SYZ, 1,
+		id_SYZ, 2,
+		id_LZ, 0,
+		id_LZ, 1,
+		id_LZ, 2,
+		id_SLZ, 0,
+		id_SLZ, 1,
+		id_SLZ, 2,
+		id_SBZ, 0,
+		id_SBZ, 1,
+		id_LZ, 3,
+		id_SBZ, 2,
+#endif
+        id_SS, 0,
+        0x80, 0x00
+    };
+
+// ===========================================================================
+
+// ---------------------------------------------------------------------------
+// Demo mode
+// ---------------------------------------------------------------------------
+
+GotoDemo:
+    ctx->var->v_demolength = 0x1E;
+
+loc_33B6:
+    ctx->var->v_vbla_routine = 4;
+    WaitForVBla(ctx);
+    DeformLayers(ctx);
+    PaletteCycle(ctx);
+    RunPLC(ctx);
+    ctx->reg.d0 = ctx->varptr->v_player[obX];
+    ctx->reg.d0 += 2;
+    ctx->varptr->v_player[obX] = ctx->reg.d0;
+    if (ctx->reg.d0 >= 0x1C00) {
+        ctx->var->v_gamemode = id_Sega;
+        return;
+    }
+
+// ===========================================================================
+
+loc_33E4:
+    ctx->var->v_jpadpress1 &= btnStart;
+    if (ctx->var->v_jpadpress1 == 0) {
+        goto Tit_ChkLevSel;
+    }
+    if (ctx->var->v_demolength != 0) {
+        goto loc_33B6;
+    }
+    ctx->reg.d0 = bgm_Fade;
+    PlaySound_Special(ctx); // fade out music
+    ctx->reg.d0 = ctx->var->v_demonum; // load demo number
+    ctx->reg.d0 &= 7;
+    ctx->reg.d0 += ctx->reg.d0;
+    ctx->reg.d0 = Demo_Levels[ctx->reg.d0]; // load level number for demo
+    ctx->var->v_zone = ctx->reg.d0;
+    ctx->var->v_demonum++; // add 1 to demo number
+    // is demo number less than 4?
+    if (ctx->var->v_demonum >= 4) {
+        ctx->var->v_demonum = 0;
+    }
+
+    // loc_3422
+    ctx->var->f_demo = 1; // turn demo mode on
+    ctx->var->v_gamemode = id_Demo; // set screen mode to 08 (demo)
+    // is level number 0600 (special stage)?
+    if (ctx->reg.d0 == 0x600) {
+        ctx->var->v_gamemode = id_Special; // set screen mode to $10 (Special Stage)
+        ctx->var->v_zone = 0; // clear level number
+        ctx->var->v_lastspecial = 0; // clear special stage number
+    }
+
+    // Demo_Level:
+    ctx->var->v_lives = 3; // set lives to 3
+    ctx->reg.d0 = 0;
+    ctx->var->v_rings = 0; // clear rings
+    ctx->var->v_time = 0; // clear time
+    ctx->var->v_score = 0; // clear score
+
+#if Revision != 0
+    ctx->var->v_scorelife = 0x5000; // extra life is awarded at 50000 points
+#endif
+
+    return;
+}
+
+// ---------------------------------------------------------------------------
+// Subroutine to	change what you're selecting in the level select
+// ---------------------------------------------------------------------------
+
+// ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
+
+static void LevSelControls(S1Context* ctx) {
+    // Check if up/down is pressed and held
+    u8 d1 = ctx->var->v_jpadpress1 & (btnUp | btnDn);
+    if (d1 != 0) {
+        goto LevSel_UpDown;
+    }
+
+    // Subtract 1 from time to next move
+    ctx->var->v_levseldelay--;
+    if (ctx->var->v_levseldelay >= 0) {
+        goto LevSel_SndTest;
+    }
+
+LevSel_UpDown:
+    // Reset time delay
+    ctx->var->v_levseldelay = 0xB;
+
+    // Check if up/down is pressed
+    d1 = ctx->var->v_jpadhold1 & (btnUp | btnDn);
+    if (d1 == 0) {
+        goto LevSel_SndTest;
+    }
+
+    // Get current selection
+    u16 d0 = ctx->var->v_levselitem;
+
+    // Check if up is pressed
+    if (d1 & btnUp) {
+        d0--; // Move up 1 selection
+        if (d0 < 0) {
+            d0 = 0x14; // Wrap to selection $14 if below 0
+        }
+    }
+
+    // Check if down is pressed
+    if (d1 & btnDn) {
+        d0++; // Move down 1 selection
+        if (d0 >= 0x15) {
+            d0 = 0; // Wrap to selection 0 if above $14
+        }
+    }
+
+LevSel_Refresh:
+    // Set new selection and refresh text
+    ctx->var->v_levselitem = d0;
+    LevSelTextLoad(ctx);
+    return;
+
+LevSel_SndTest:
+    // Check if item $14 (sound test) is selected
+    if (ctx->var->v_levselitem != 0x14) {
+        goto LevSel_NoMove;
+    }
+
+    // Check if left/right is pressed
+    d1 = ctx->var->v_jpadpress1 & (btnL | btnR);
+    if (d1 == 0) {
+        goto LevSel_NoMove;
+    }
+
+    // Get current sound test number
+    d0 = ctx->var->v_levselsound;
+
+    // Check if left is pressed
+    if (d1 & btnL) {
+        d0--; // Subtract 1 from sound test
+        if (d0 < 0) {
+            d0 = 0x4F; // Wrap to $4F if below 0
+        }
+    }
+
+    // Check if right is pressed
+    if (d1 & btnR) {
+        d0++; // Add 1 to sound test
+        if (d0 >= 0x50) {
+            d0 = 0; // Wrap to 0 if above $4F
+        }
+    }
+
+LevSel_Refresh2:
+    // Set sound test number and refresh text
+    ctx->var->v_levselsound = d0;
+    LevSelTextLoad(ctx);
+
+LevSel_NoMove:
+    return;
+}
+
+
+// ---------------------------------------------------------------------------
+// Subroutine to load level select text
+// ---------------------------------------------------------------------------
+
+// ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
+
+static void LevSelTextLoad(S1Context* ctx) {
+    
+    // ---------------------------------------------------------------------------
+    // Level	select menu text
+    // ---------------------------------------------------------------------------
+    u8* LevelMenuText = s_resource(
+#if Revision == 0 
+        RESOURCE__MISC__LEVEL_SELECT_TEXT_BIN
+#else 
+        RESOURCE__MISC__LEVEL_SELECT_TEXT_JP1_BIN
+#endif 
+    ).arr;
+
+    // Constants
+    const u32 textpos = (0x40000000 | ((0xE210 & 0x3FFF) << 16) | ((0xE210 & 0xC000) >> 14));
+
+    // Initialize registers
+    ctx->reg.a1 = (u8*)LevelMenuText;       // Pointer to text data
+    // ctx->reg.a6 = (u8*)ctx->var.vdp_data_port; // VDP data port
+    ctx->reg.d4 = textpos;                  // Text position on screen
+    ctx->reg.d3 = 0xE680;                   // VRAM setting (4th palette, $680th tile)
+    ctx->reg.d1 = 0x14;                     // Number of lines of text
+
+    // Draw all lines of text
+    do {
+        // *((u32*)(ctx->reg.a6 + 4)) = ctx->reg.d4; // Set VRAM address
+        LevSel_ChgLine(ctx);                      // Draw line of text
+        ctx->reg.d4 += 0x800000;                  // Jump to next line
+        ctx->reg.d1--;
+    } while (ctx->reg.d1 != 0);
+
+    // Highlight selected line
+    ctx->reg.d0 = ctx->var->v_levselitem;          // Get selected item index
+    ctx->reg.d1 = ctx->reg.d0;
+    ctx->reg.d4 = textpos;                        // Reset text position
+    ctx->reg.d0 <<= 7;                            // Calculate offset for selected line
+    ctx->reg.d0 = ((ctx->reg.d0 & 0xFFFF) << 16) | ((ctx->reg.d0 >> 16) & 0xFFFF); // Swap words
+    ctx->reg.d4 += ctx->reg.d0;                   // Adjust text position for selected line
+    ctx->reg.a1 = (u8*)LevelMenuText;             // Reset text pointer
+    ctx->reg.d1 <<= 3;                            // Calculate offset in text data
+    ctx->reg.d0 = ctx->reg.d1;
+    ctx->reg.d1 += ctx->reg.d1;                   // Multiply by 3
+    ctx->reg.d1 += ctx->reg.d0;
+    ctx->reg.a1 += ctx->reg.d1;                   // Adjust text pointer for selected line
+    ctx->reg.d3 = 0xC680;                         // VRAM setting (3rd palette, $680th tile)
+    *((u32*)(ctx->reg.a6 + 4)) = ctx->reg.d4;     // Set VRAM address
+    LevSel_ChgLine(ctx);                          // Recolor selected line
+
+    // Check if selected item is the sound test option
+    ctx->reg.d3 = 0xE680;                         // Reset VRAM setting
+    if (ctx->var->v_levselitem != 0x14) {
+        goto LevSel_DrawSnd;
+    }
+    ctx->reg.d3 = 0xC680;                         // Change VRAM setting for sound test
+
+LevSel_DrawSnd:
+    // Draw sound test digits
+    // *((u32*)(ctx->reg.a6 + 4)) = ctx->var.vram_bg + 0xC30; // Set VRAM address for sound test
+    ctx->reg.d0 = ctx->var->v_levselsound;         // Get sound test value
+    ctx->reg.d0 += 0x80;                          // Adjust for display
+    ctx->reg.d2 = ctx->reg.d0;                    // Save for second digit
+    ctx->reg.d0 >>= 4;                            // Extract first digit
+    LevSel_ChgSnd(ctx);                           // Draw first digit
+    ctx->reg.d0 = ctx->reg.d2;                    // Restore for second digit
+    LevSel_ChgSnd(ctx);                           // Draw second digit
+}
+
+// ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
+
+static void LevSel_ChgSnd(S1Context* ctx) {
+    // Mask the lower 4 bits of d0 to get the digit
+    ctx->reg.d0 &= 0xF;
+
+    // Check if the digit is $A-$F (hexadecimal)
+    if (ctx->reg.d0 >= 0xA) {
+        // Adjust for alpha characters (A-F)
+        ctx->reg.d0 += 7;
+    }
+
+    // Combine with the VRAM setting (d3) and write to VDP data port (a6)
+    ctx->reg.d0 += ctx->reg.d3;
+    // TODO *((u16*)ctx->reg.a6) = ctx->reg.d0; 
+}
+
+// ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
+
+static void LevSel_ChgLine(S1Context* ctx) {
+    // Number of characters per line
+    ctx->reg.d2 = 0x17;
+
+    // Loop through each character in the line
+    do {
+        // Get the next character from the text data
+        ctx->reg.d0 = *((u8*)ctx->reg.a1);
+        ctx->reg.a1++;
+
+        // Check if the character is valid (positive)
+        if (ctx->reg.d0 >= 0) {
+            // Combine the character with the VRAM setting (d3)
+            ctx->reg.d0 += ctx->reg.d3;
+
+            // Send the character to VRAM
+            *((u16*)ctx->reg.a6) = ctx->reg.d0;
+        } else {
+            // Use a blank character (0) for invalid characters
+            *((u16*)ctx->reg.a6) = 0;
+        }
+
+        // Decrement the character counter
+        ctx->reg.d2--;
+    } while (ctx->reg.d2 != 0);
 }
