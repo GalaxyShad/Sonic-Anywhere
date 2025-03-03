@@ -680,23 +680,25 @@ static void QuickPLC(S1Context* ctx) { NOT_IMPLEMENTED }
 // ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
 
 static void PaletteFadeIn(S1Context* ctx) {
-    ctx->var->v_pfade_start = 0x003F;
+    ctx->var->v_pfade_start = 0x00;
+    ctx->var->v_pfade_size = 0x3F;
 
-    u32 d0 = 0;
-    u8* a0 = ctx->var->v_palette;
-    d0 = ctx->var->v_pfade_start;
-    a0 += d0;
-    u16 d1 = cBlack;
-    ctx->var->v_pfade_size = d0;
+// PalFadeIn_Alt
+    ctx->reg.d0 = 0;
+    ctx->reg.a0 = ctx->var->v_palette;
+    ctx->reg.d0 = ctx->var->v_pfade_start;
+    ctx->reg.a0 += ctx->reg.d0;
+    ctx->reg.d1 = cBlack;
+    ctx->reg.d0 = ctx->var->v_pfade_size;
 
     // fill
     do {
-        *((u16*)a0) = d1;
-        a0++;
-        d0--;
-    } while (d0 != 0);
+        *((u16*)ctx->reg.a0) = ctx->reg.d1;
+        ctx->reg.a0 += 2;
+        if (ctx->reg.d0 != 0)  ctx->reg.d0--;
+    } while (ctx->reg.d0 != 0);
 
-    u32 d4 = 0x15;
+    ctx->reg.d4 = 0x15;
 
     // .mainloop:
     do {
@@ -706,8 +708,8 @@ static void PaletteFadeIn(S1Context* ctx) {
         FadeIn_FromBlack(ctx);
         RunPLC(ctx);
 
-        d4--;
-    } while (d4 != 0);
+        ctx->reg.d4--;
+    } while (ctx->reg.d4 != 0);
 }
 
 // ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
@@ -718,13 +720,12 @@ static void FadeIn_FromBlack(S1Context* ctx) {
     ctx->reg.d0 = ctx->var->v_pfade_start;
     ctx->reg.a0 += ctx->reg.d0;
     ctx->reg.a1 += ctx->reg.d0;
-
     ctx->reg.d0 = ctx->var->v_pfade_size;
 
     // .addcolour:
     do {
         FadeIn_AddColour(ctx); // increase colour
-        ctx->reg.d0--; 
+        if (ctx->reg.d0 != 0) ctx->reg.d0--; 
     } while (ctx->reg.d0 != 0); // repeat for size of palette
 
     // is level Labyrinth?
@@ -747,40 +748,55 @@ static void FadeIn_FromBlack(S1Context* ctx) {
 }
 
 static void FadeIn_AddColour(S1Context* ctx) {
-    // addblue
-    ctx->reg.d2 = *(u16*)ctx->reg.a1; ctx->reg.a1 += 2;
-    ctx->reg.d3 = *(u16*)ctx->reg.a0;
+FadeIn_AddColour__addblue:
+    // Load target colour value into d2
+    ctx->reg.d2 = DEREF_ADR_TO_WORD(ctx->reg.a1); //*((u16*)ctx->reg.a1);
+    ctx->reg.a1 += 2;
 
-    // is colour already at threshold level?
-    if (ctx->reg.d2 != ctx->reg.d3) {
-        ctx->reg.d1 = ctx->reg.d3;
-        ctx->reg.d1 += 0x200; // increase blue	value
+    // Load current colour value into d3
+    ctx->reg.d3 = DEREF_ADR_TO_WORD(ctx->reg.a0);//*((u16*)ctx->reg.a0);
 
-        // has blue reached threshold level?
-        if (ctx->reg.d2 < ctx->reg.d1) {
-            *(u16*)ctx->reg.a0 = ctx->reg.d1; // update palette
-            ctx->reg.a0 += 2;
-            return;
-        }
-
-        // addgreen:
-        ctx->reg.d1 = ctx->reg.d3;
-        ctx->reg.d1 += 0x20; // increase green value
-
-        if (ctx->reg.d2 < ctx->reg.d1) {
-            *(u16*)ctx->reg.a0 = ctx->reg.d1; // update palette
-            ctx->reg.a0 += 2;
-            return;
-        }
-
-        // .addred:
-        *(u16*)ctx->reg.a0 += 1;
-        ctx->reg.a0 += 2;
-
-        return;
+    // Check if the current colour is already at the target level
+    if (ctx->reg.d3 == ctx->reg.d2) {
+        goto FadeIn_AddColour__next;
     }
 
+    // Increase the blue value
+    ctx->reg.d1 = ctx->reg.d3 + 0x200;
+    if (ctx->reg.d1 > ctx->reg.d2) {
+        goto FadeIn_AddColour__addgreen;
+    }
+
+    // Update the palette with the new blue value
+    MOVE_WORD_TO_ADR(ctx->reg.d1, ctx->reg.a0);
+    // *((u16*)ctx->reg.a0) = ctx->reg.d1;
     ctx->reg.a0 += 2;
+    return;
+
+FadeIn_AddColour__addgreen:
+    // Increase the green value
+    ctx->reg.d1 = ctx->reg.d3 + 0x20;
+    if (ctx->reg.d1 > ctx->reg.d2) {
+        goto FadeIn_AddColour__addred;
+    }
+
+    // Update the palette with the new green value
+    MOVE_WORD_TO_ADR(ctx->reg.d1, ctx->reg.a0);
+    // *((u16*)ctx->reg.a0) = ctx->reg.d1;
+    ctx->reg.a0 += 2;
+    return;
+
+FadeIn_AddColour__addred:
+    // Increase the red value
+    MOVE_WORD_TO_ADR(DEREF_ADR_TO_WORD(ctx->reg.a0) + 0x002, ctx->reg.a0);
+    // *((u16*)ctx->reg.a0) += 2;
+    ctx->reg.a0 += 2;
+    return;
+
+FadeIn_AddColour__next:
+    // Move to the next colour
+    ctx->reg.a0 += 2;
+    return;
 }
 
 
@@ -791,7 +807,8 @@ static void FadeIn_AddColour(S1Context* ctx) {
 
 // ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
 static void PaletteFadeOut(S1Context* ctx) {
-    ctx->var->v_pfade_start = 0x003F;
+    ctx->var->v_pfade_start = 0x00;
+    ctx->var->v_pfade_size  = 0x3F;
     ctx->reg.d4 = 0x15;
 
     // mainloop
@@ -836,12 +853,14 @@ static void FadeOut_ToBlack(S1Context* ctx) {
 
 static void FadeOut_DecColour(S1Context* ctx) {
     // dered
-    ctx->reg.d2 = *(u16*)ctx->reg.a0;
+    ctx->reg.d2 = (ctx->reg.a0[0] << 8) | ctx->reg.a0[1];
+    
     if (ctx->reg.d2 != 0) {
         ctx->reg.d1 = ctx->reg.d2;
         ctx->reg.d1 &= 0xE;
         if (ctx->reg.d1 != 0) {
-            *(u16*)ctx->reg.a0 -= 2;    // decrease red value
+            ctx->reg.a0[1] -= 2;
+            // *(u16*)ctx->reg.a0 -= 2;    // decrease red value
             ctx->reg.a0 += 2;
             return;
         }
@@ -852,8 +871,10 @@ static void FadeOut_DecColour(S1Context* ctx) {
         ctx->reg.d1 = ctx->reg.d2;
         ctx->reg.d1 &= 0xE0;
         if (ctx->reg.d1 != 0) {
-             *(u16*)ctx->reg.a0 -= 0x20;    // decrease green value
+            ctx->reg.a0[1] -= 0x20;
+            //  *(u16*)ctx->reg.a0 -= 0x20;    // decrease green value
             ctx->reg.a0 += 2;
+            return;
         }
 
         // ===========================================================================
@@ -862,8 +883,10 @@ static void FadeOut_DecColour(S1Context* ctx) {
         ctx->reg.d1 = ctx->reg.d2;
         ctx->reg.d1 &= 0xE00;
         if (ctx->reg.d1 != 0) {
-            *(u16*)ctx->reg.a0 -= 0x200;
+            ctx->reg.a0[0] -= 2;
+            // *(u16*)ctx->reg.a0 -= 0x200;
             ctx->reg.a0 += 2;
+            return;
         }
 
         // ===========================================================================
@@ -879,7 +902,9 @@ static void FadeOut_DecColour(S1Context* ctx) {
 // ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
 
 static void PaletteWhiteIn(S1Context* ctx) {
-    ctx->var->v_pfade_start = 0x003F;
+    ctx->var->v_pfade_start = 0x00;
+    ctx->var->v_pfade_size = 0x3F;
+
     ctx->reg.d0 = 0;
     ctx->reg.a0 = ctx->var->v_palette;
     ctx->reg.d0 = ctx->var->v_pfade_start;
@@ -983,7 +1008,8 @@ static void WhiteIn_DecColour(S1Context* ctx) {
 
 
 static void PaletteWhiteOut(S1Context* ctx) {
-    ctx->var->v_pfade_start = 0x003F;
+    ctx->var->v_pfade_start = 0x00;
+    ctx->var->v_pfade_size = 0x3F;
     ctx->reg.d4 = 0x15;
 
     // mainloop
@@ -1134,58 +1160,100 @@ loc_20BC:
 // ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
 
 static void PalLoad_Fade(S1Context* ctx) {
-    NOT_IMPLEMENTED
-    return;
+    // NOT_IMPLEMENTED
+    // return;
 
     // ---------------------------------------------------------------------------
     // Palette data
     // ---------------------------------------------------------------------------
 
-    // ReadonlyByteArray Pal_SegaBG = s_resource(RESOURCE__PALETTE__SEGA_BACKGROUND_BIN);
-    // ReadonlyByteArray Pal_Title = s_resource(RESOURCE__PALETTE__TITLE_SCREEN_BIN);
-    // ReadonlyByteArray Pal_LevelSel = s_resource(RESOURCE__PALETTE__LEVEL_SELECT_BIN);
-    // ReadonlyByteArray Pal_Sonic = s_resource(RESOURCE__PALETTE__SONIC_BIN);
-    // ReadonlyByteArray Pal_GHZ = s_resource(RESOURCE__PALETTE__GREEN_HILL_ZONE_BIN);
-    // ReadonlyByteArray Pal_LZ = s_resource(RESOURCE__PALETTE__LABYRINTH_ZONE_BIN);
-    // ReadonlyByteArray Pal_LZWater = s_resource(RESOURCE__PALETTE__LABYRINTH_ZONE_UNDERWATER_BIN);
-    // ReadonlyByteArray Pal_MZ = s_resource(RESOURCE__PALETTE__MARBLE_ZONE_BIN);
-    // ReadonlyByteArray Pal_SLZ = s_resource(RESOURCE__PALETTE__STAR_LIGHT_ZONE_BIN);
-    // ReadonlyByteArray Pal_SYZ = s_resource(RESOURCE__PALETTE__SPRING_YARD_ZONE_BIN);
-    // ReadonlyByteArray Pal_SBZ1 = s_resource(ResourceID res_id)
-    // ReadonlyByteArray Pal_SBZ2 =
-    // ReadonlyByteArray Pal_Special =
-    // ReadonlyByteArray Pal_SBZ3 =
-    // ReadonlyByteArray Pal_SBZ3Water =
-    // ReadonlyByteArray Pal_LZSonWater =
-    // ReadonlyByteArray Pal_SBZ3SonWat =
-    // ReadonlyByteArray Pal_SSResult =
-    // ReadonlyByteArray Pal_Continue =
-    // ReadonlyByteArray Pal_Ending =
+    ReadonlyByteArray Pal_SegaBG = s_resource(RESOURCE__PALETTE__SEGA_BACKGROUND_BIN);
+    ReadonlyByteArray Pal_Title = s_resource(RESOURCE__PALETTE__TITLE_SCREEN_BIN);
+    ReadonlyByteArray Pal_LevelSel = s_resource(RESOURCE__PALETTE__LEVEL_SELECT_BIN);
+    ReadonlyByteArray Pal_Sonic = s_resource(RESOURCE__PALETTE__SONIC_BIN);
+    ReadonlyByteArray Pal_GHZ = s_resource(RESOURCE__PALETTE__GREEN_HILL_ZONE_BIN);
+    ReadonlyByteArray Pal_LZ = s_resource(RESOURCE__PALETTE__LABYRINTH_ZONE_BIN);
+    ReadonlyByteArray Pal_LZWater = s_resource(RESOURCE__PALETTE__LABYRINTH_ZONE_UNDERWATER_BIN);
+    ReadonlyByteArray Pal_MZ = s_resource(RESOURCE__PALETTE__MARBLE_ZONE_BIN);
+    ReadonlyByteArray Pal_SLZ = s_resource(RESOURCE__PALETTE__STAR_LIGHT_ZONE_BIN);
+    ReadonlyByteArray Pal_SYZ = s_resource(RESOURCE__PALETTE__SPRING_YARD_ZONE_BIN);
+    ReadonlyByteArray Pal_SBZ1 = s_resource(RESOURCE__PALETTE__SBZ_ACT_1_BIN);
+    ReadonlyByteArray Pal_SBZ2 = s_resource(RESOURCE__PALETTE__SBZ_ACT_2_BIN);
+    ReadonlyByteArray Pal_Special = s_resource(RESOURCE__PALETTE__SPECIAL_STAGE_BIN);
+    ReadonlyByteArray Pal_SBZ3 = s_resource(RESOURCE__PALETTE__SBZ_ACT_3_BIN);
+    ReadonlyByteArray Pal_SBZ3Water = s_resource(RESOURCE__PALETTE__SBZ_ACT_3_UNDERWATER_BIN);
+    ReadonlyByteArray Pal_LZSonWater = s_resource(RESOURCE__PALETTE__LABYRINTH_ZONE_UNDERWATER_BIN);
+    ReadonlyByteArray Pal_SBZ3SonWat = s_resource(RESOURCE__PALETTE__SONIC_SBZ3_UNDERWATER_BIN);
+    ReadonlyByteArray Pal_SSResult = s_resource(RESOURCE__PALETTE__SPECIAL_STAGE_RESULTS_BIN);
+    ReadonlyByteArray Pal_Continue = s_resource(RESOURCE__PALETTE__SPECIAL_STAGE_CONTINUE_BONUS_BIN);
+    ReadonlyByteArray Pal_Ending = s_resource(RESOURCE__PALETTE__ENDING_BIN);
+
+    struct palp {
+        u32 dstPaletteLine;
+        ReadonlyByteArray* sourceAddress;
+    };
+
+    struct palp PalPointers[] = {
+        [palid_SegaBG]          = { 0, &Pal_SegaBG}, //  0 - Sega logo
+        [palid_Title]           = { 0, &Pal_Title}, //  1 - title screen
+        [palid_LevelSel]        = { 0, &Pal_LevelSel}, //  2 - level select
+        [palid_Sonic]           = { 0, &Pal_Sonic}, //  3 - Sonic
+        // Levels
+        [palid_GHZ]             = { 1*0x10*2, &Pal_GHZ}, //  4 - GHZ
+        [palid_LZ]              = { 1*0x10*2, &Pal_LZ}, //  5 - LZ
+        [palid_MZ]              = { 1*0x10*2, &Pal_MZ}, //  6 - MZ
+        [palid_SLZ]             = { 1*0x10*2, &Pal_SLZ}, //  7 - SLZ
+        [palid_SYZ]             = { 1*0x10*2, &Pal_SYZ}, //  8 - SYZ
+        [palid_SBZ1]            = { 1*0x10*2, &Pal_SBZ1}, //  9 - SBZ1
+
+        [palid_Special]         = { 0, &Pal_Special}, //  $A (10) - special stage
+        [palid_LZWater]         = { 0, &Pal_LZWater}, //  $B (11) - LZ underwater
+        [palid_SBZ3]            = { 1*0x10*2, &Pal_SBZ3}, //  $C (12) - SBZ3
+        [palid_SBZ3Water]       = { 0, &Pal_SBZ3Water}, //  $D (13) - SBZ3 underwater
+        [palid_SBZ2]            = { 1*0x10*2, &Pal_SBZ2}, //  $E (14) - SBZ2
+        [palid_LZSonWater]      = { 0, &Pal_LZSonWater}, //  $F (15) - LZ Sonic underwater
+        [palid_SBZ3SonWat]      = { 0, &Pal_SBZ3SonWat}, //  $10 (16) - SBZ3 Sonic underwater
+        [palid_SSResult]        = { 0, &Pal_SSResult}, //  $11 (17) - special stage results
+        [palid_Continue]        = { 0, &Pal_Continue}, //  $12 (18) - special stage results continue
+        [palid_Ending]          = { 0, &Pal_Ending}, //  $13 (19) - ending sequence
+    };
 
     // Load palette pointers base address into a1
-    // ctx->reg.a1 = (u8*)PalPointers;
+    ctx->reg.a1 = (u8*)PalPointers;
 
     // Calculate offset in the palette pointers table (d0 * 8)
-    ctx->reg.d0 <<= 3;
-    ctx->reg.a1 += ctx->reg.d0;
+    // ctx->reg.d0 <<= 3;
+    ctx->reg.a1 = &PalPointers[ctx->reg.d0];
 
     // Get palette data address into a2
-    ctx->reg.a2 = (u8*)(*((u32*)ctx->reg.a1));
+    ctx->reg.a2 = PalPointers[ctx->reg.d0].sourceAddress->arr;
     ctx->reg.a1 += 4;
 
     // Get target RAM address into a3
-    ctx->reg.a3 = (u8*)(*((u16*)ctx->reg.a1));
+    ctx->reg.a3 = ctx->var->v_palette + PalPointers[ctx->reg.d0].dstPaletteLine;
     ctx->reg.a1 += 2;
 
     // Adjust a3 to point to the fading palette area
     ctx->reg.a3 += (ctx->var->v_palette_fading - ctx->var->v_palette);
 
     // Get length of palette data into d7
-    ctx->reg.d7 = *((u16*)ctx->reg.a1);
+    ctx->reg.d7 = PalPointers[ctx->reg.d0].sourceAddress->size / 4;
 
     // Copy palette data from a2 to a3
     do {
-        *((u32*)ctx->reg.a3) = *((u32*)ctx->reg.a2);
+        // ctx->reg.a3[0] = ctx->reg.a2[3];        
+        // ctx->reg.a3[1] = ctx->reg.a2[2];
+        // ctx->reg.a3[2] = ctx->reg.a2[1];
+        // ctx->reg.a3[3] = ctx->reg.a2[0];
+
+        ctx->reg.a3[3] = ctx->reg.a2[3];        
+        ctx->reg.a3[2] = ctx->reg.a2[2];
+        ctx->reg.a3[1] = ctx->reg.a2[1];
+        ctx->reg.a3[0] = ctx->reg.a2[0];
+
+        // MOVE_LONG_TO_ADR(DEREF_ADR_TO_LONG(ctx->reg.a2), ctx->reg.a3);
+
+        // *((u32*)ctx->reg.a3) = *((u32*)ctx->reg.a2);
         ctx->reg.a2 += 4;
         ctx->reg.a3 += 4;
         ctx->reg.d7--;
@@ -1377,6 +1445,11 @@ static void GM_Title(S1Context* ctx) {
     ctx->varptr->v_sonicteam[0] = id_CreditsText; // load "SONIC TEAM PRESENTS" object
     ExecuteObjects(ctx);
     BuildSprites(ctx);
+
+    // for (int i = 0; i < 0x40; i++) {
+    //     ctx->var->v_palette_fading[i*2+0] = 0b00000100;
+    //     ctx->var->v_palette_fading[i*2+1] = 0b11101110;
+    // }
     PaletteFadeIn(ctx);
     disable_ints;
     locVRAM(ArtTile_Title_Foreground*tile_size, vdp_control_port);

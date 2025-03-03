@@ -506,9 +506,6 @@ static void dma_68k_to_cram__() {
 
     // for (int i = 0; i < dma__.len / 2; i++) {
     //     u16 col = *(((u16*)dma__.src) + i);
-
-
-
     //     palette__[i] = col; 
     // }
 }

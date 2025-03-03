@@ -12,6 +12,11 @@
 #define FixBugs
 #define Revision 1
 
+#define DEREF_ADR_TO_LONG(ADR)          ((ADR[0] << 24) | (ADR[1] << 16) | (ADR[2] << 8) | ADR[3])
+#define DEREF_ADR_TO_WORD(ADR)          ((ADR[0] << 8) | ADR[1])
+#define MOVE_WORD_TO_ADR(WORD, ADR)     ADR[0] = ((WORD) >> 8) & 0xFF; ADR[1] = ((WORD) & 0xFF)
+#define MOVE_LONG_TO_ADR(LONG, ADR)     ADR[0] = ((LONG) >> 24) & 0xFF; ADR[1] = ((LONG) >> 16) & 0xFF; ADR[2] = ((LONG) >> 8) & 0xFF; ADR[3] = ((LONG) >> 0) & 0xFF;
+
 void ON_PLAY_SOUND_SPECIAL(u8 snd) {
     if (snd == sfx_Sega) {
         md_audio__play_sound_special(SND__SEGA);
